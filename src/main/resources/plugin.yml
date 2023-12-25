@@ -1,0 +1,8 @@
+depend: [MafanaMysqlAPI]
+name: MafanaTextNetwork
+version: '${project.version}'
+main: me.tahacheji.mafanatextnetwork.MafanaTextNetwork
+api-version: '1.20'
+
+commands:
+  MTNAdmin:
