@@ -25,6 +25,7 @@ public final class MafanaTextNetwork extends JavaPlugin{
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
         CommandHandler.registerCommands(PlayerChatToggle.class, this);
         CommandHandler.registerCommands(PrivateMessage.class, this);
+        CommandHandler.registerCommands(PlayerMailCommand.class, this);
         CommandHandler.registerCommands(MafanaTextNetworkCommand.class, this);
         getCommand("MTNAdmin").setExecutor(new AdminCommand());
 

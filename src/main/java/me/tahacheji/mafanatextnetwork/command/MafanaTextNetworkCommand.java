@@ -60,7 +60,7 @@ public class MafanaTextNetworkCommand {
         try {
             new Recipient_GUI().getAllowedRecipientGUI(player, "").open(player);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 }
