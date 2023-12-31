@@ -12,16 +12,16 @@ import org.bukkit.entity.Player;
 public class MafanaTextNetworkCommand {
 
     @Command(names = {"mtn addRecipient", "mafanatext addRecipient", "mafanatextnetwork addRecipient"}, playerOnly = true)
-    public void addRecipient(Player player, @Param(name = "recipient")OfflinePlayer target) {
+    public void addRecipient(Player player, @Param(name = "recipient") OfflinePlayer target) {
         if(target == null) {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
             return;
         }
-        if(me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player, target)) {
+        if(me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player.getUniqueId(), target.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_ALREADY_RECIPIENT");
             return;
         }
-        me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().addRecipient(player, target);
+        me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().addRecipient(player.getUniqueId(), target.getUniqueId());
         player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_ADDED");
     }
 
@@ -31,11 +31,11 @@ public class MafanaTextNetworkCommand {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
             return;
         }
-        if(!me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player, target)) {
+        if(!me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player.getUniqueId(), target.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_IS_NOT_RECIPIENT");
             return;
         }
-        me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().removeRecipient(player, target);
+        me.tahacheji.mafanatextnetwork.MafanaTextNetwork.getInstance().getGamePlayerMessageData().removeRecipient(player.getUniqueId(), target.getUniqueId());
         player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_REMOVED");
     }
 
@@ -52,7 +52,7 @@ public class MafanaTextNetworkCommand {
         try {
             new PrivateLog_GUI().getPrivateMessageGUI(player, true, "", "").open(player);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
     @Command(names = {"mtn currentRecipients", "mafanatext currentRecipients", "mafanatextnetwork currentRecipients"}, playerOnly = true)

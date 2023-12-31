@@ -5,29 +5,30 @@ import org.bukkit.inventory.ItemStack;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class GamePlayerPublicMessaging {
 
-    private final Player sender;
+    private final String sender;
 
     private final String time;
 
     private String text;
 
 
-    public GamePlayerPublicMessaging(Player sender, String time, String text) {
+    public GamePlayerPublicMessaging(String sender, String time, String text) {
         this.sender = sender;
         this.time = time;
         this.text = text;
     }
 
-    public GamePlayerPublicMessaging(Player sender, String time) {
+    public GamePlayerPublicMessaging(String sender, String time) {
         this.sender = sender;
         this.time = time;
     }
 
-    public Player getSender() {
-        return sender;
+    public UUID getSender() {
+        return UUID.fromString(sender);
     }
 
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");

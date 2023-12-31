@@ -6,7 +6,6 @@ import me.tahacheji.mafanatextnetwork.data.GamePlayerMessageData;
 import me.tahacheji.mafanatextnetwork.data.MessageManager;
 import me.tahacheji.mafanatextnetwork.event.PlayerChatEvent;
 import me.tahacheji.mafanatextnetwork.event.PlayerJoin;
-import me.tahacheji.mafanatextnetwork.util.MTNCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MafanaTextNetwork extends JavaPlugin{

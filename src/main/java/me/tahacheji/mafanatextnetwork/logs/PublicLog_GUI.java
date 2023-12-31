@@ -6,6 +6,8 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.PaginatedGui;
+import me.tahacheji.mafana.MafanaNetworkCommunicator;
+import me.tahacheji.mafana.data.OfflineProxyPlayer;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPrivateMessaging;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPublicMessaging;
@@ -107,7 +109,10 @@ public class PublicLog_GUI {
             openFilterSign((Player) event.getWhoClicked(), sortNewestToOldest, textFilter);
         }));
 
-        List<GamePlayerPublicMessaging> privateMessages = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPublicTextList(player);
+        List<GamePlayerPublicMessaging> privateMessages = new ArrayList<>();
+        if(MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPublicTextList(player.getUniqueId()) != null) {
+            privateMessages.addAll(MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPublicTextList(player.getUniqueId()));
+        }
         List<GamePlayerPublicMessaging> filteredMessages = new ArrayList<>();
         for (GamePlayerPublicMessaging privateMessage : privateMessages) {
             if (textFilter.isEmpty() || privateMessage.getText().contains(textFilter)) {
@@ -130,13 +135,14 @@ public class PublicLog_GUI {
 
     @NotNull
     private static ItemStack getItemStackPM(GamePlayerPublicMessaging publicMessaging) {
+        OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayer(publicMessaging.getSender());
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta itemMeta = item.getItemMeta();
         itemMeta.setDisplayName(ChatColor.AQUA + publicMessaging.getTime());
         List<String> itemLore = new ArrayList<>();
         itemLore.add(ChatColor.DARK_GRAY + "");
         itemLore.add("------------------------");
-        itemLore.add(ChatColor.DARK_GRAY + "Sender: " + publicMessaging.getSender().getName());
+        itemLore.add(ChatColor.DARK_GRAY + "Sender: " + offlineProxyPlayer.getPlayerName());
         itemLore.add(ChatColor.DARK_GRAY + "");
         if (publicMessaging.getText() != null) {
             itemLore.add(ChatColor.DARK_GRAY + "Message: " + publicMessaging.getText());

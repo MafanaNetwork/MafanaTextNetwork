@@ -20,12 +20,12 @@ public class PrivateMessage {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND::PLAYER_NOT_ONLINE");
             return;
         }
-        if(!MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(target, player)) {
+        if(!MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(target.getUniqueId(), player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: CANNOT_MESSAGE_PLAYER_NOT_RECIPIENT");
             return;
         }
         try {
-            MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player, target, message);
+            MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player.getUniqueId(), target.getUniqueId(), message);
             proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + net.md_5.bungee.api.ChatColor.of(new Color(203, 161, 53)) + "MTN" + ChatColor.DARK_GRAY + "] FROM " + net.md_5.bungee.api.ChatColor.of(new Color(170, 136, 34)) + player.getName() + ": " + ChatColor.WHITE + message);
             player.sendMessage(ChatColor.DARK_GRAY + "[" + net.md_5.bungee.api.ChatColor.of(new Color(203, 161, 53)) + "MTN" + ChatColor.DARK_GRAY + "] TO " + net.md_5.bungee.api.ChatColor.of(new Color(170, 136, 34)) + target.getName() + ": " + ChatColor.WHITE + message);
         } catch (Exception e) {

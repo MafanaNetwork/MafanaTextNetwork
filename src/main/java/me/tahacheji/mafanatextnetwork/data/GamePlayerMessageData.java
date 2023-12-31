@@ -6,6 +6,8 @@ import com.google.gson.reflect.TypeToken;
 import me.TahaCheji.mysqlData.MySQL;
 import me.TahaCheji.mysqlData.MysqlValue;
 import me.TahaCheji.mysqlData.SQLGetter;
+import me.tahacheji.mafana.MafanaNetworkCommunicator;
+import me.tahacheji.mafana.data.OfflineProxyPlayer;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import me.tahacheji.mafanatextnetwork.util.EncryptionUtil;
 import org.bukkit.OfflinePlayer;
@@ -87,118 +89,130 @@ public class GamePlayerMessageData extends MySQL {
         return m != null ? m : new ArrayList<>();
     }
 
-    public void addPublicText(Player player, String string) throws IOException {
+    public void addPublicText(UUID player, String string) throws IOException {
         setLastTimeText(player);
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
         if (getPublicTextList(player) != null) {
             List<GamePlayerPublicMessaging> list = getPublicTextList(player);
-            list.add(new GamePlayerPublicMessaging(player, time, string));
+            list.add(new GamePlayerPublicMessaging(player.toString(), time, string));
             setPublicText(player, list);
         } else {
             List<GamePlayerPublicMessaging> list = new ArrayList<>();
-            list.add(new GamePlayerPublicMessaging(player, time, string));
+            list.add(new GamePlayerPublicMessaging(player.toString(), time, string));
             setPublicText(player, list);
         }
     }
 
-    public void setPublicText(Player player, List<GamePlayerPublicMessaging> list) throws JsonProcessingException {
-        sqlGetter.setString(new MysqlValue("PUBLIC_TEXT", player.getUniqueId(), new EncryptionUtil().encryptPublicMessages(list)));
+    public void setPublicText(UUID uuid, List<GamePlayerPublicMessaging> list) {
+        Gson gson = new Gson();
+
+        sqlGetter.setString(new MysqlValue("PUBLIC_TEXT", uuid, gson.toJson(list)));
     }
 
-    public List<GamePlayerPublicMessaging> getPublicTextList(Player player) throws IOException {
-        return new EncryptionUtil().decryptPublicMessages(sqlGetter.getString(player.getUniqueId(), new MysqlValue("PUBLIC_TEXT")));
-    }
-
-
-    public void setTextValue(OfflinePlayer offlinePlayer, String i) {
-        sqlGetter.setString(new MysqlValue("TEXT_VALUE", offlinePlayer.getUniqueId(), i));
-    }
-
-    public String getTextValue(OfflinePlayer offlinePlayer) {
-        return sqlGetter.getString(offlinePlayer.getUniqueId(), new MysqlValue("TEXT_VALUE"));
+    public List<GamePlayerPublicMessaging> getPublicTextList(UUID uuid) {
+        String x = sqlGetter.getString(uuid, new MysqlValue("PUBLIC_TEXT"));
+        Gson gson = new Gson();
+        List<GamePlayerPublicMessaging> m = gson.fromJson(x, new TypeToken<List<GamePlayerPublicMessaging>>() {
+        }.getType());
+        return m != null ? m : new ArrayList<>();
     }
 
 
-    public void addPrivateText(Player sender, OfflinePlayer receiver, String string) throws Exception {
+    public void setTextValue(UUID uuid, String i) {
+        sqlGetter.setString(new MysqlValue("TEXT_VALUE", uuid, i));
+    }
+
+    public String getTextValue(UUID uuid) {
+        return sqlGetter.getString(uuid, new MysqlValue("TEXT_VALUE"));
+    }
+
+
+    public void addPrivateText(UUID sender, UUID receiver, String string) throws Exception {
         setLastTimeText(sender);
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
         if (getPrivateTextList(sender) != null) {
             List<GamePlayerPrivateMessaging> gamePlayerPrivateMessagings = getPrivateTextList(sender);
-            gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender, receiver, time, string));
+            gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string));
             setPrivateText(sender, gamePlayerPrivateMessagings);
         } else {
             List<GamePlayerPrivateMessaging> gamePlayerPrivateMessagings = new ArrayList<>();
-            gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender, receiver, time, string));
+            gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string));
             setPrivateText(sender, gamePlayerPrivateMessagings);
         }
     }
 
-    public void addPrivateText(Player sender, OfflinePlayer receiver) throws Exception {
+    public void addPrivateText(UUID sender, UUID receiver) throws Exception {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
         List<GamePlayerPrivateMessaging> gamePlayerPrivateMessagings = getPrivateTextList(sender);
-        gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender, receiver, time));
+        gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time));
         setPrivateText(sender, gamePlayerPrivateMessagings);
     }
 
-    public void addPrivateText(Player sender, OfflinePlayer receiver, String string, ItemStack itemStack) throws Exception {
+    public void addPrivateText(UUID sender, UUID receiver, String string, ItemStack itemStack) throws Exception {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
         List<GamePlayerPrivateMessaging> gamePlayerPrivateMessagings = getPrivateTextList(sender);
-        GamePlayerPrivateMessaging gamePlayerPrivateMessaging = new GamePlayerPrivateMessaging(sender, receiver, time, string);
+        GamePlayerPrivateMessaging gamePlayerPrivateMessaging = new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string);
         gamePlayerPrivateMessaging.setItem(itemStack);
         gamePlayerPrivateMessagings.add(gamePlayerPrivateMessaging);
         setPrivateText(sender, gamePlayerPrivateMessagings);
     }
 
-    public void addPrivateText(Player sender, OfflinePlayer receiver, ItemStack itemStack) throws Exception {
+    public void addPrivateText(UUID sender, UUID receiver, ItemStack itemStack) throws Exception {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
         List<GamePlayerPrivateMessaging> gamePlayerPrivateMessagings = getPrivateTextList(sender);
-        GamePlayerPrivateMessaging gamePlayerPrivateMessaging = new GamePlayerPrivateMessaging(sender, receiver, time);
+        GamePlayerPrivateMessaging gamePlayerPrivateMessaging = new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time);
         gamePlayerPrivateMessaging.setItem(itemStack);
         gamePlayerPrivateMessagings.add(gamePlayerPrivateMessaging);
         setPrivateText(sender, gamePlayerPrivateMessagings);
     }
 
-    public void setPrivateText(Player player, List<GamePlayerPrivateMessaging> list) throws JsonProcessingException {
-        sqlGetter.setString(new MysqlValue("PRIVATE_TEXT", player.getUniqueId(), new EncryptionUtil().encryptPrivateMessages(list)));
+    public void setPrivateText(UUID uuid, List<GamePlayerPrivateMessaging> list) throws JsonProcessingException {
+        Gson gson = new Gson();
+
+        sqlGetter.setString(new MysqlValue("PRIVATE_TEXT", uuid, gson.toJson(list)));
     }
 
-    public List<GamePlayerPrivateMessaging> getPrivateTextList(Player player) throws Exception {
-        return new EncryptionUtil().decryptPrivateMessages(sqlGetter.getString(player.getUniqueId(), new MysqlValue("PRIVATE_TEXT")));
+    public List<GamePlayerPrivateMessaging> getPrivateTextList(UUID uuid) throws Exception {
+        String x = sqlGetter.getString(uuid, new MysqlValue("PRIVATE_TEXT"));
+        Gson gson = new Gson();
+        List<GamePlayerPrivateMessaging> m = gson.fromJson(x, new TypeToken<List<GamePlayerPrivateMessaging>>() {
+        }.getType());
+        return m != null ? m : new ArrayList<>();
     }
 
 
-    public boolean isRecipient(OfflinePlayer request, OfflinePlayer player) {
+    public boolean isRecipient(UUID request, UUID player) {
         for (AllowedRecipient uuid : getAllowedRecipients(request)) {
-            if (uuid.getPlayerUUID().toString().equalsIgnoreCase(player.getUniqueId().toString())) {
+            if (uuid.getPlayerUUID().toString().equalsIgnoreCase(player.toString())) {
                 return true;
             }
         }
         return false;
     }
 
-    public void addRecipient(OfflinePlayer player, OfflinePlayer recipient) {
+    public void addRecipient(UUID player, UUID recipient) {
         List<AllowedRecipient> list = new LinkedList<>(getAllowedRecipientsString(player));
-        list.add(new AllowedRecipient(recipient.getName(), recipient.getName(), recipient.getUniqueId().toString()));
+        OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayer(recipient);
+        list.add(new AllowedRecipient(offlineProxyPlayer.getPlayerName(), offlineProxyPlayer.getPlayerDisplayName(), recipient.toString()));
         setAllowedRecipientString(player, list);
     }
 
-    public void removeRecipient(OfflinePlayer player, OfflinePlayer recipient) {
-        UUID recipientUUID = recipient.getUniqueId();
+    public void removeRecipient(UUID player, UUID recipient) {
         List<AllowedRecipient> allowedRecipients = getAllowedRecipientsString(player);
         List<AllowedRecipient> updatedRecipients = new ArrayList<>();
 
         for (AllowedRecipient uuidString : allowedRecipients) {
-            if (!recipientUUID.toString().equals(uuidString.getPlayerUUID().toString())) {
+            if (!recipient.toString().equals(uuidString.getPlayerUUID().toString())) {
                 updatedRecipients.add(uuidString);
             }
         }
@@ -206,20 +220,20 @@ public class GamePlayerMessageData extends MySQL {
         setAllowedRecipientString(player, updatedRecipients); // Update the list in the database
     }
 
-    public void setAllowedRecipientString(OfflinePlayer player, List<AllowedRecipient> list) {
+    public void setAllowedRecipientString(UUID player, List<AllowedRecipient> list) {
         Gson gson = new Gson();
-        sqlGetter.setString(new MysqlValue("ALLOWED_RECIPIENTS", player.getUniqueId(), gson.toJson(list)));
+        sqlGetter.setString(new MysqlValue("ALLOWED_RECIPIENTS", player, gson.toJson(list)));
     }
 
-    public List<AllowedRecipient> getAllowedRecipientsString(OfflinePlayer player) {
-        String x = sqlGetter.getString(player.getUniqueId(), new MysqlValue("ALLOWED_RECIPIENTS"));
+    public List<AllowedRecipient> getAllowedRecipientsString(UUID player) {
+        String x = sqlGetter.getString(player, new MysqlValue("ALLOWED_RECIPIENTS"));
         Gson gson = new Gson();
         List<AllowedRecipient> recipients = gson.fromJson(x, new TypeToken<List<AllowedRecipient>>() {
         }.getType());
         return recipients != null ? recipients : new ArrayList<>();
     }
 
-    public List<AllowedRecipient> getAllowedRecipients(OfflinePlayer player) {
+    public List<AllowedRecipient> getAllowedRecipients(UUID player) {
         List<AllowedRecipient> list = new ArrayList<>();
         for (AllowedRecipient s : getAllowedRecipientsString(player)) {
             if (s == null) {
@@ -234,8 +248,8 @@ public class GamePlayerMessageData extends MySQL {
         return list;
     }
 
-    public List<GamePlayerPrivateMessaging> getPrivateChatsWithAllowedRecipient(Player player, OfflinePlayer allowedRecipient) throws Exception {
-        List<GamePlayerPrivateMessaging> privateMessages = getPrivateTextList(player);
+    public List<GamePlayerPrivateMessaging> getPrivateChatsWithAllowedRecipient(UUID uuid, UUID allowedRecipient) throws Exception {
+        List<GamePlayerPrivateMessaging> privateMessages = getPrivateTextList(uuid);
 
         if (privateMessages == null) {
             return new ArrayList<>();
@@ -244,7 +258,7 @@ public class GamePlayerMessageData extends MySQL {
         List<GamePlayerPrivateMessaging> chatsWithAllowedRecipient = new ArrayList<>();
 
         for (GamePlayerPrivateMessaging privateMessage : privateMessages) {
-            if (privateMessage.getReceiver().getUniqueId().equals(allowedRecipient.getUniqueId())) {
+            if (privateMessage.getReceiver().equals(allowedRecipient)) {
                 chatsWithAllowedRecipient.add(privateMessage);
             }
         }
@@ -253,31 +267,31 @@ public class GamePlayerMessageData extends MySQL {
     }
 
 
-    public void setLastTimeText(Player player) {
+    public void setLastTimeText(UUID uuid) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
-        sqlGetter.setString(new MysqlValue("LAST_TIME_TEXT", player.getUniqueId(), time));
+        sqlGetter.setString(new MysqlValue("LAST_TIME_TEXT", uuid, time));
     }
 
-    public String getLastTimeText(Player player) {
-        return sqlGetter.getString(player.getUniqueId(), new MysqlValue("LAST_TIME_TEXT"));
+    public String getLastTimeText(UUID uuid) {
+        return sqlGetter.getString(uuid, new MysqlValue("LAST_TIME_TEXT"));
     }
 
-    public void clearLastTimeText(Player player) {
-        sqlGetter.setString(new MysqlValue("LAST_TIME_TEXT", player.getUniqueId(), ""));
+    public void clearLastTimeText(UUID uuid) {
+        sqlGetter.setString(new MysqlValue("LAST_TIME_TEXT", uuid, ""));
     }
 
-    public void clearPrivateTextLogs(Player player) {
-        sqlGetter.setString(new MysqlValue("PRIVATE_TEXT", player.getUniqueId(), ""));
+    public void clearPrivateTextLogs(UUID uuid) {
+        sqlGetter.setString(new MysqlValue("PRIVATE_TEXT", uuid, ""));
     }
 
-    public void clearPublicTextLogs(Player player) {
-        sqlGetter.setString(new MysqlValue("PUBLIC_TEXT", player.getUniqueId(), ""));
+    public void clearPublicTextLogs(UUID uuid) {
+        sqlGetter.setString(new MysqlValue("PUBLIC_TEXT", uuid, ""));
     }
 
-    public void clearAllowedRecipients(Player player) {
-        sqlGetter.setString(new MysqlValue("ALLOWED_RECIPIENTS", player.getUniqueId(), ""));
+    public void clearAllowedRecipients(UUID uuid) {
+        sqlGetter.setString(new MysqlValue("ALLOWED_RECIPIENTS", uuid, ""));
     }
 
     @Override

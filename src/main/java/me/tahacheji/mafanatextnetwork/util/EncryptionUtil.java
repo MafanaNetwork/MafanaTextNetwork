@@ -7,12 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPrivateMessaging;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPublicMessaging;
-import me.tahacheji.mafanatextnetwork.data.adapter.GamePlayerPrivateMessagingAdapter;
-import me.tahacheji.mafanatextnetwork.data.adapter.GamePlayerPublicMessagingAdapter;
-import me.tahacheji.mafanatextnetwork.data.adapter.PlayerTypeAdapter;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
+
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
@@ -32,35 +27,6 @@ public class EncryptionUtil {
 
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    public String encryptPrivateMessages(List<GamePlayerPrivateMessaging> messages) {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(GamePlayerPrivateMessaging.class, new GamePlayerPrivateMessagingAdapter())
-                .create();
-        return gson.toJson(messages);
-    }
-
-    public List<GamePlayerPrivateMessaging> decryptPrivateMessages(String s) throws Exception {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(GamePlayerPrivateMessaging.class, new GamePlayerPrivateMessagingAdapter())
-                .create();
-        return gson.fromJson(s, new TypeToken<List<GamePlayerPrivateMessaging>>() {}.getType());
-    }
-
-    public String encryptPublicMessages(List<GamePlayerPublicMessaging> messages) {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(GamePlayerPublicMessaging.class, new GamePlayerPublicMessagingAdapter())
-                .create();
-        return gson.toJson(messages);
-    }
-
-    public List<GamePlayerPublicMessaging> decryptPublicMessages(String s) {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(GamePlayerPublicMessaging.class, new GamePlayerPublicMessagingAdapter())
-                .create();
-        return gson.fromJson(s, new TypeToken<List<GamePlayerPublicMessaging>>() {}.getType());
-    }
-
 
     public String encryptPlayers(List<UUID> list) {
         Gson gson = new Gson();

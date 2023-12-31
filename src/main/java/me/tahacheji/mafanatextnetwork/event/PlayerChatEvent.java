@@ -26,14 +26,14 @@ public class PlayerChatEvent implements Listener {
         Player player = event.getPlayer();
         String message = event.getMessage();
         event.setCancelled(true);
-        String value = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player);
-        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPublicText(player, message);
+        String value = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player.getUniqueId());
+        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPublicText(player.getUniqueId(), message);
         if (!value.equalsIgnoreCase("1") && !value.equalsIgnoreCase("3")) {
             messageManager.sendMessage(player, message);
         }
 
         for(Player x : Bukkit.getOnlinePlayers()) {
-            String m = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(x);
+            String m = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(x.getUniqueId());
             if(!m.equalsIgnoreCase("2") && !m.equalsIgnoreCase("3")) {
                 x.sendMessage(player.getDisplayName() + ChatColor.WHITE +  ": "  + message);
             }

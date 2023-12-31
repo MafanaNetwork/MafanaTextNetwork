@@ -22,7 +22,7 @@ public class PlayerMailCommand {
     @Command(names = {"sendMail", "mail", "sm"}, playerOnly = true)
     public void sendMail(Player player, @Param(name = "player") OfflinePlayer target, @Param(name = "message", concated = true) String message) {
         ProxyPlayer proxyPlayer = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayer(target);
-        if(!MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(target, player)) {
+        if(!MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(target.getUniqueId(), player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: CANNOT_MESSAGE_PLAYER_NOT_RECIPIENT");
             return;
         }

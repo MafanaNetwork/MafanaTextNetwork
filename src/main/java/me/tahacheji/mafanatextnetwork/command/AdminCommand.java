@@ -74,7 +74,7 @@ public class AdminCommand implements CommandExecutor {
                     player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
                     return true;
                 }
-                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPrivateTextLogs(player);
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPrivateTextLogs(player.getUniqueId());
                 player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: " + "cleared!");
             }
             if(args[0].equalsIgnoreCase("clearPublic")) {
@@ -83,7 +83,7 @@ public class AdminCommand implements CommandExecutor {
                     player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
                     return true;
                 }
-                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPublicTextLogs(player);
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPublicTextLogs(player.getUniqueId());
                 player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: " + "cleared!");
             }
             if(args[0].equalsIgnoreCase("clearRecipient")) {
@@ -92,7 +92,7 @@ public class AdminCommand implements CommandExecutor {
                     player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
                     return true;
                 }
-                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearAllowedRecipients(player);
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearAllowedRecipients(player.getUniqueId());
                 player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: " + "cleared!");
             }
             if(args[0].equalsIgnoreCase("clearTime")) {
@@ -101,7 +101,7 @@ public class AdminCommand implements CommandExecutor {
                     player.sendMessage(ChatColor.RED + "MafanaTextNetwork: PLAYER_NOT_FOUND");
                     return true;
                 }
-                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearLastTimeText(player);
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearLastTimeText(player.getUniqueId());
             }
             if(args[0].equalsIgnoreCase("msg")) {
                 Player recipient = Bukkit.getPlayer(args[1]);
@@ -115,7 +115,7 @@ public class AdminCommand implements CommandExecutor {
                 }
                 String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                 try {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player, recipient, message);
+                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player.getUniqueId(), recipient.getUniqueId(), message);
                     player.sendMessage(ChatColor.DARK_GREEN + "[MTN] TO " + ChatColor.DARK_PURPLE + recipient.getName() + ": " + ChatColor.WHITE + message);
                     recipient.sendMessage(ChatColor.DARK_RED + "[MTN ADMIN] FROM " + ChatColor.DARK_PURPLE + player.getName() + ": " + ChatColor.WHITE + message);
                 } catch (Exception e) {
@@ -144,7 +144,7 @@ public class AdminCommand implements CommandExecutor {
                 if(args.length != 2) {
                     String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                     try {
-                        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player, recipient, message, itemStack);
+                        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player.getUniqueId(), recipient.getUniqueId(), message, itemStack);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -154,7 +154,7 @@ public class AdminCommand implements CommandExecutor {
                     recipient.sendMessage(ChatColor.DARK_RED + "[MTN ADMIN] FROM " + ChatColor.DARK_PURPLE + player.getName() + ": " + itemStack.getItemMeta().getDisplayName()+ ChatColor.WHITE +" " + message);
                 } else {
                     try {
-                        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player, recipient, itemStack);
+                        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPrivateText(player.getUniqueId(), recipient.getUniqueId(), itemStack);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

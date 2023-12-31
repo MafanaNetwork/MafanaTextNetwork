@@ -1,49 +1,50 @@
 package me.tahacheji.mafanatextnetwork.data;
 
+import me.tahacheji.mafanatextnetwork.util.EncryptionUtil;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class GamePlayerPrivateMessaging {
 
-    private final OfflinePlayer sender;
-    private final OfflinePlayer receiver;
+    private final String sender;
+    private final String receiver;
 
     private final String time;
 
     private String text;
 
-    private ItemStack item;
+    private String item;
 
 
-    public GamePlayerPrivateMessaging(OfflinePlayer sender, OfflinePlayer receiver, String time) {
+    public GamePlayerPrivateMessaging(String sender, String receiver, String time) {
         this.sender = sender;
         this.receiver = receiver;
         this.time = time;
     }
 
-    public GamePlayerPrivateMessaging(OfflinePlayer sender, OfflinePlayer receiver, String time, String text) {
+    public GamePlayerPrivateMessaging(String sender, String receiver, String time, String text) {
         this(sender, receiver, time);
         this.text = text;
     }
 
     public void setItem(ItemStack item) {
-        this.item = item;
+        this.item = new EncryptionUtil().itemToBase64(item);
     }
 
     public void setText(String text) {
         this.text = text;
     }
 
-    public OfflinePlayer getSender() {
-        return sender;
+    public UUID getSender() {
+        return UUID.fromString(sender);
     }
 
-    public OfflinePlayer getReceiver() {
-        return receiver;
+    public UUID getReceiver() {
+        return UUID.fromString(receiver);
     }
 
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
@@ -65,6 +66,11 @@ public class GamePlayerPrivateMessaging {
     }
 
     public ItemStack getItem() {
-        return item;
+        try {
+            return new EncryptionUtil().itemFromBase64(item);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

@@ -6,6 +6,9 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.PaginatedGui;
+import me.tahacheji.mafana.MafanaNetworkCommunicator;
+import me.tahacheji.mafana.data.OfflineProxyPlayer;
+import me.tahacheji.mafana.data.ProxyPlayer;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPrivateMessaging;
 import net.kyori.adventure.text.Component;
@@ -17,9 +20,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public class PrivateLog_GUI {
 
@@ -118,12 +123,20 @@ public class PrivateLog_GUI {
             openFilterSign((Player) event.getWhoClicked(), sortNewestToOldest, playerNameFilter, textFilter, false);
         }));
 
-        List<GamePlayerPrivateMessaging> privateMessages = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPrivateTextList(player);
+        List<GamePlayerPrivateMessaging> privateMessages = new ArrayList<>();
+        if(MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPrivateTextList(player.getUniqueId()) != null) {
+            privateMessages.addAll(MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPrivateTextList(player.getUniqueId()));
+        }
         List<GamePlayerPrivateMessaging> filteredMessages = new ArrayList<>();
         for (GamePlayerPrivateMessaging privateMessage : privateMessages) {
-            if (playerNameFilter.isEmpty() || privateMessage.getReceiver().getName().equalsIgnoreCase(playerNameFilter)) {
-                if (textFilter.isEmpty() || privateMessage.getText().contains(textFilter)) {
-                    filteredMessages.add(privateMessage);
+            if(privateMessage.getReceiver() != null) {
+                OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayer(privateMessage.getReceiver());
+                if(offlineProxyPlayer.getPlayerName() != null) {
+                    if (playerNameFilter.isEmpty() || offlineProxyPlayer.getPlayerName().equalsIgnoreCase(playerNameFilter)) {
+                        if (textFilter.isEmpty() || privateMessage.getText().contains(textFilter)) {
+                            filteredMessages.add(privateMessage);
+                        }
+                    }
                 }
             }
         }
@@ -143,17 +156,19 @@ public class PrivateLog_GUI {
 
     @NotNull
     private static ItemStack getItemStackPM(GamePlayerPrivateMessaging privateMessaging) {
+        OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayer(privateMessaging.getReceiver());
+        ProxyPlayer proxyPlayer = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayer(UUID.fromString(offlineProxyPlayer.getPlayerUUID()));
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.AQUA + privateMessaging.getReceiver().getName() + " " + privateMessaging.getTime());
+        itemMeta.setDisplayName(ChatColor.AQUA + offlineProxyPlayer.getPlayerName() + " " + privateMessaging.getTime());
         List<String> itemLore = new ArrayList<>();
         itemLore.add(ChatColor.DARK_GRAY + "");
         itemLore.add("------------------------");
-        itemLore.add(ChatColor.DARK_GRAY + "Sender: " + privateMessaging.getSender().getName());
-        if (privateMessaging.getReceiver().getPlayer().isOnline()) {
-            itemLore.add(ChatColor.DARK_GRAY + "Receiver: " + privateMessaging.getReceiver().getPlayer().getDisplayName() + " " + ChatColor.GREEN + "[ONLINE]");
+        itemLore.add(ChatColor.DARK_GRAY + "Sender: " + offlineProxyPlayer.getPlayerName());
+        if (proxyPlayer != null) {
+            itemLore.add(ChatColor.DARK_GRAY + "Receiver: " + offlineProxyPlayer.getPlayerDisplayName() + " " + ChatColor.GREEN + "[ONLINE]");
         } else {
-            itemLore.add(ChatColor.DARK_GRAY + "Receiver: " + privateMessaging.getReceiver().getPlayer().getDisplayName() + " " + ChatColor.RED + "[OFFLINE]");
+            itemLore.add(ChatColor.DARK_GRAY + "Receiver: " + offlineProxyPlayer.getPlayerDisplayName() + " " + ChatColor.RED + "[OFFLINE]");
         }
         itemLore.add(ChatColor.DARK_GRAY + "");
         if (privateMessaging.getText() != null) {

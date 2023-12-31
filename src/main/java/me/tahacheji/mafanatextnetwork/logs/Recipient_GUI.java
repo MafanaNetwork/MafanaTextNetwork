@@ -90,15 +90,18 @@ public class Recipient_GUI {
             openFilterSign((Player) event.getWhoClicked(), textFilter);
         }));
 
-        List<AllowedRecipient> uuids = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getAllowedRecipients(player);
+        List<AllowedRecipient> uuids = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getAllowedRecipients(player.getUniqueId());
         List<UUID> filteredUUID = new ArrayList<>();
+
         for (AllowedRecipient uuid : uuids) {
             OfflinePlayer oPlayer = Bukkit.getOfflinePlayer(uuid.getPlayerUUID());
-            if (textFilter.isEmpty() || oPlayer.getName().contains(textFilter)) {
+
+            if (oPlayer != null && (textFilter.isEmpty() || oPlayer.getName().contains(textFilter))) {
                 filteredUUID.add(uuid.getPlayerUUID());
             }
         }
-        for(UUID uuid : filteredUUID) {
+
+        for (UUID uuid : filteredUUID) {
             ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
             skullMeta.setDisplayName(ChatColor.DARK_GRAY + "[" + Bukkit.getOfflinePlayer(uuid).getName() + ChatColor.DARK_GRAY + "]");
@@ -107,7 +110,7 @@ public class Recipient_GUI {
             skullLore.add(ChatColor.DARK_GRAY + "------------------------");
             skullLore.add(ChatColor.DARK_GRAY + "NAME: " + Bukkit.getOfflinePlayer(uuid).getName());
             skullLore.add(ChatColor.DARK_GRAY + "UUID: " + uuid.toString());
-            skullLore.add(ChatColor.DARK_GRAY + "Chats Together : " + MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPrivateChatsWithAllowedRecipient(player, Bukkit.getOfflinePlayer(uuid)).size());
+            skullLore.add(ChatColor.DARK_GRAY + "Chats Together : " + MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPrivateChatsWithAllowedRecipient(player.getUniqueId(), uuid).size());
             skullLore.add("");
             skullLore.add(ChatColor.DARK_RED + "Left Click to remove");
             skullLore.add(ChatColor.DARK_GREEN + "Right Click to view chats together");
@@ -120,12 +123,12 @@ public class Recipient_GUI {
                     try {
                         new PrivateLog_GUI().getPrivateMessageGUI(player, true, Bukkit.getOfflinePlayer(uuid).getName(), "").open(player);
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        e.printStackTrace();
                     }
                     return;
                 }
                 event.getWhoClicked().closeInventory();
-                MafanaTextNetwork.getInstance().getGamePlayerMessageData().removeRecipient(player, Bukkit.getOfflinePlayer(uuid));
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().removeRecipient(player.getUniqueId(), uuid);
                 player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_REMOVED");
             }));
         }
