@@ -47,19 +47,47 @@ public class GamePlayerPrivateMessaging {
         return UUID.fromString(receiver);
     }
 
-    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
+    private transient DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
 
-    public String getTime() {
+    public String getDate() {
         return time;
     }
 
     public String getLocalDateTime() {
+        if (dtf == null) {
+            dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
+        }
         String newTime = time;
         newTime = newTime.replace("[", "");
         newTime = newTime.replace("]", "");
         LocalDateTime parsedTime = LocalDateTime.parse(newTime, dtf);
         return dtf.format(parsedTime);
     }
+
+    public int getTime() {
+        String newTime = getDate();
+        String[] components = newTime.replaceAll("[\\[\\]]", "").split("[ /:]");
+        if (components.length >= 6) {
+            int month = Integer.parseInt(components[0]);
+            int day = Integer.parseInt(components[1]);
+            int year = Integer.parseInt(components[2]);
+            int hour = Integer.parseInt(components[3]);
+            int minute = Integer.parseInt(components[4]);
+            String amPm = components[5];
+            int time = year * 100000000 + month * 1000000 + day * 10000 + hour * 100 + minute;
+            if (amPm.equalsIgnoreCase("PM")) {
+                hour += 12;
+                hour %= 24;
+            }
+            time += hour * 10000;
+            return time;
+        } else {
+            System.err.println("Invalid date format: " + newTime);
+            return 0;
+        }
+    }
+
+
 
     public String getText() {
         return text;
@@ -68,9 +96,7 @@ public class GamePlayerPrivateMessaging {
     public ItemStack getItem() {
         try {
             return new EncryptionUtil().itemFromBase64(item);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception ignore) {}
         return null;
     }
 }

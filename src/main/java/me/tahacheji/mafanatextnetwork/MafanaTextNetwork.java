@@ -26,8 +26,7 @@ public final class MafanaTextNetwork extends JavaPlugin{
         CommandHandler.registerCommands(PrivateMessage.class, this);
         CommandHandler.registerCommands(PlayerMailCommand.class, this);
         CommandHandler.registerCommands(MafanaTextNetworkCommand.class, this);
-        getCommand("MTNAdmin").setExecutor(new AdminCommand());
-
+        CommandHandler.registerCommands(MafanaTextNetworkAdminCommand.class, this);
     }
 
     @Override

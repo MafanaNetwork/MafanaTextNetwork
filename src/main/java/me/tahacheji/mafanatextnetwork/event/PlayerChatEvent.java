@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class PlayerChatEvent implements Listener {
 
@@ -22,22 +23,26 @@ public class PlayerChatEvent implements Listener {
     }
 
     @EventHandler
-    public void onChat(AsyncPlayerChatEvent event) throws IOException {
+    public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         String message = event.getMessage();
         event.setCancelled(true);
-        String value = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player.getUniqueId());
-        MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPublicText(player.getUniqueId(), message);
-        if (!value.equalsIgnoreCase("1") && !value.equalsIgnoreCase("3")) {
-            messageManager.sendMessage(player, message);
-        }
-
-        for(Player x : Bukkit.getOnlinePlayers()) {
-            String m = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(x.getUniqueId());
-            if(!m.equalsIgnoreCase("2") && !m.equalsIgnoreCase("3")) {
-                x.sendMessage(player.getDisplayName() + ChatColor.WHITE +  ": "  + message);
+        CompletableFuture<String> z = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player.getUniqueId());
+        z.thenAccept(value -> {
+            MafanaTextNetwork.getInstance().getGamePlayerMessageData().addPublicText(player.getUniqueId(), message);
+            if (!value.equalsIgnoreCase("1") && !value.equalsIgnoreCase("3")) {
+                messageManager.sendMessage(player, message);
             }
-        }
+
+            for(Player x : Bukkit.getOnlinePlayers()) {
+                CompletableFuture<String> s = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(x.getUniqueId());
+                s.thenAccept(m -> {
+                    if(!m.equalsIgnoreCase("2") && !m.equalsIgnoreCase("3")) {
+                        x.sendMessage(player.getDisplayName() + ChatColor.WHITE +  ": "  + message);
+                    }
+                });
+            }
+        });
 
     }
 }
