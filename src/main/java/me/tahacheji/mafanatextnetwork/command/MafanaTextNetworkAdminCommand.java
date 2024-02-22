@@ -13,6 +13,7 @@ import me.tahacheji.mafanatextnetwork.logs.PublicLog_GUI;
 import me.tahacheji.mafanatextnetwork.logs.Recipient_GUI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.units.qual.C;
@@ -36,11 +37,11 @@ public class MafanaTextNetworkAdminCommand {
         }
     }
 
-    @Command(names = {"mtn admin view privateLog", "mafanatext admin view privateLog", "mafanatextnetwork admin view privateLog"}, permission = "mafana.admin", playerOnly= true)
+    @Command(names = {"mtn admin view privateLog", "mafanatext admin view privateLog", "mafanatextnetwork admin view privateLog"}, permission = "mafana.admin", playerOnly = true)
     public void viewPrivateLog(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         if (offlineProxyPlayer != null) {
             try {
-               new PrivateLog_GUI().getPrivateMessageGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, "", "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
+                new PrivateLog_GUI().getPrivateMessageGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, "", "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -72,12 +73,16 @@ public class MafanaTextNetworkAdminCommand {
     }
 
     @Command(names = {"mtn admin troll", "mafanatext admin troll", "mafanatextnetwork admin troll"}, permission = "mafana.admin")
-    public void trollTextPlayer(@Param(name = "letTheSenderSee") boolean letTheSenderSee, @Param(name = "sender") ProxyPlayer sender, @Param(name = "receiver") ProxyPlayer receiver, @Param(name = "message", concated = true) String message) {
+    public void trollTextPlayer(@Param(name = "letTheSenderSee") boolean letTheSenderSee, @Param(name = "sender") OfflineProxyPlayer sender, @Param(name = "receiver") OfflineProxyPlayer receiver, @Param(name = "message", concated = true) String message) {
         try {
-            if(letTheSenderSee) {
-                sender.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD  + receiver.getPlayerName() + ": " + ChatColor.WHITE + message);
+            if (letTheSenderSee) {
+                MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
+                    proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD + receiver.getPlayerName() + ": " + ChatColor.WHITE + message);
+                });
             }
-            receiver.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+            MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
+                proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,13 +109,17 @@ public class MafanaTextNetworkAdminCommand {
     }
 
     @Command(names = {"mtn admin msg", "mafanatext admin msg", "mafanatextnetwork admin msg"}, permission = "mafana.admin")
-    public void adminMessage(CommandSender commandSender, @Param(name = "letTheSenderSee") boolean letThemSee, @Param(name = "target") ProxyPlayer proxyPlayer, @Param(name = "message", concated = true) String message) {
-        if(commandSender instanceof Player) {
+    public void adminMessage(CommandSender commandSender, @Param(name = "letTheSenderSee") boolean letThemSee, @Param(name = "target") OfflineProxyPlayer target, @Param(name = "message", concated = true) String message) {
+        if (commandSender instanceof Player) {
             Player player = (Player) commandSender;
-            if(letThemSee) {
-                proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.RED + player.getName() + ": " + ChatColor.WHITE + message);
+            if (letThemSee) {
+                MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(target.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
+                    proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.RED + player.getName() + ": " + ChatColor.WHITE + message);
+                });
             } else {
-                proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "]: " + ChatColor.WHITE + message);
+                MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(target.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
+                    proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "]: " + ChatColor.WHITE + message);
+                });
             }
         }
     }
@@ -126,7 +135,7 @@ public class MafanaTextNetworkAdminCommand {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
             LocalDateTime now = LocalDateTime.now();
             String time = "[" + dtf.format(now) + "]";
-            PlayerMail playerMail = new PlayerMail(player.getUniqueId().toString(), offlineProxyPlayer.getPlayerUUID().toString(), time, false, message,  UUID.randomUUID().toString());
+            PlayerMail playerMail = new PlayerMail(player.getUniqueId().toString(), offlineProxyPlayer.getPlayerUUID().toString(), time, false, message, UUID.randomUUID().toString());
             try {
                 CompletableFuture<Void> addMailFuture = MafanaTextNetwork.getInstance().getGamePlayerMessageData().addMail(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), playerMail);
                 addMailFuture.thenRun(() -> {

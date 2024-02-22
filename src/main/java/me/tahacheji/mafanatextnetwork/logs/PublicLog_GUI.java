@@ -178,6 +178,9 @@ public class PublicLog_GUI {
                 itemLore.add("------------------------");
                 itemMeta.setLore(itemLore);
                 item.setItemMeta(itemMeta);
+                NBTItem nbtItem = new NBTItem(item);
+                nbtItem.setInteger("TIME", publicMessaging.getTime());
+                item = nbtItem.getItem();
                 return item;
             } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);

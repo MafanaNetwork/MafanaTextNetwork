@@ -1,4 +1,4 @@
-depend: [MafanaMysqlAPI]
+depend: [MafanaDatabaseAPI]
 name: MafanaTextNetwork
 version: '${project.version}'
 main: me.tahacheji.mafanatextnetwork.MafanaTextNetwork
