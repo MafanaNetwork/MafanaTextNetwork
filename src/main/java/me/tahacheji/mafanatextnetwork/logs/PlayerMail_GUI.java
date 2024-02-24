@@ -291,7 +291,7 @@ public class PlayerMail_GUI {
                 }
                 itemMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
                 itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-                itemLore.add(ChatColor.DARK_GRAY + "To: " + net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) + proxyPlayer.getPlayerName());
+                itemLore.add(ChatColor.DARK_GRAY + "To: " + net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) + offlineProxyPlayer.getPlayerName());
                 itemLore.add(ChatColor.DARK_GRAY + "Date: " + net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) + playerMail.getDate());
                 itemLore.add(ChatColor.DARK_GRAY + "");
                 itemLore.add(ChatColor.DARK_GRAY + "Message: ");

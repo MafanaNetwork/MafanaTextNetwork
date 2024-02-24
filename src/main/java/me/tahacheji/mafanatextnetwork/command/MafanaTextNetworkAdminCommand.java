@@ -80,7 +80,7 @@ public class MafanaTextNetworkAdminCommand {
                     proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD + receiver.getPlayerName() + ": " + ChatColor.WHITE + message);
                 });
             }
-            MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
+            MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(receiver.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
                 proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
             });
         } catch (Exception e) {

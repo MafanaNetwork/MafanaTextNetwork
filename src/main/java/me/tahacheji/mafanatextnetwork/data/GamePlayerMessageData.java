@@ -303,7 +303,7 @@ public class GamePlayerMessageData extends MySQL {
     }
 
     public List<AllowedRecipient> getAllowedRecipientsStringSync(UUID player) {
-        String x = sqlGetter.getString(player, new DatabaseValue("ALLOWED_RECIPIENTS"));
+        String x = sqlGetter.getStringSync(player, new DatabaseValue("ALLOWED_RECIPIENTS"));
         Gson gson = new Gson();
         List<AllowedRecipient> recipients = gson.fromJson(x, new TypeToken<List<AllowedRecipient>>() {
         }.getType());
