@@ -31,7 +31,7 @@ public final class MafanaTextNetwork extends JavaPlugin{
 
     @Override
     public void onDisable() {
-        gamePlayerMessageData.disconnect();
+        gamePlayerMessageData.close();
     }
 
     public MessageManager getMessageManager() {

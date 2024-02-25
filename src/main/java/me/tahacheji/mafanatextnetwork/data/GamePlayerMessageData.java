@@ -316,10 +316,8 @@ public class GamePlayerMessageData extends MySQL {
         return sqlGetter;
     }
 
-    @Override
     public void connect() {
-        super.connect();
-        if (this.isConnected()) sqlGetter.createTable("player_text_database",
+        sqlGetter.createTable("player_text_database",
                 new DatabaseValue("NAME", ""),
                 new DatabaseValue("LAST_TIME_TEXT", ""),
                 new DatabaseValue("ALLOWED_RECIPIENTS", ""),
