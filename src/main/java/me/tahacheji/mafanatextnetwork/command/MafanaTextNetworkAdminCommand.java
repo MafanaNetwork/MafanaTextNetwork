@@ -23,6 +23,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static org.bukkit.Bukkit.getLogger;
+
 public class MafanaTextNetworkAdminCommand {
 
 
@@ -73,51 +75,66 @@ public class MafanaTextNetworkAdminCommand {
     }
 
     @Command(names = {"mtn admin troll", "mafanatext admin troll", "mafanatextnetwork admin troll"}, permission = "mafana.admin")
-    public void trollTextPlayer(@Param(name = "letTheSenderSee") boolean letTheSenderSee, @Param(name = "sender") OfflineProxyPlayer sender, @Param(name = "receiver") OfflineProxyPlayer receiver, @Param(name = "message", concated = true) String message) {
-        try {
-            CompletableFuture.supplyAsync(() -> {
+    public void trollTextPlayer(Player player, @Param(name = "letTheSenderSee") boolean letTheSenderSee, @Param(name = "sender") OfflineProxyPlayer sender, @Param(name = "receiver") OfflineProxyPlayer receiver, @Param(name = "message", concated = true) String message) {
+        CompletableFuture.supplyAsync(() -> {
+            try {
                 ProxyPlayer s = null;
                 ProxyPlayer r = null;
+
                 if (letTheSenderSee) {
-                    s = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).join();
+                    CompletableFuture<ProxyPlayer> senderFuture = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID()));
+                    s = senderFuture.get();
                 }
-                r = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(receiver.getPlayerUUID())).join();
+
+                CompletableFuture<ProxyPlayer> receiverFuture = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(receiver.getPlayerUUID()));
+                r = receiverFuture.get();
+
                 if (s != null) {
                     ProxyPlayer finalR = r;
                     s.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD + receiver.getPlayerName() + ": " + ChatColor.WHITE + message)
                             .thenComposeAsync(unused -> {
-                                if(finalR != null) {
-                                    finalR.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+                                if (finalR != null) {
+                                    return finalR.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message)
+                                            .exceptionally(e -> {
+                                                getLogger().severe("Failed to send message from sender to receiver: " + e.getMessage());
+                                                return null;
+                                            });
+                                } else {
+                                    return CompletableFuture.completedFuture(null);
                                 }
-                                return null;
-                            });
-                } else if(r != null) {
-                    r.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+                            })
+                            .exceptionally(e -> null);
+                } else if (r != null) {
+                    r.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message)
+                            .exceptionally(e -> null);
+                } else {
+                    getLogger().warning("Sender and receiver are null.");
                 }
-                 return null;
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            } catch (Exception e) {
+                getLogger().severe("An error occurred while executing trollTextPlayer: " + e.getMessage());
+            }
+            return null;
+        });
     }
 
+
     @Command(names = {"mtn admin clear privateLogs", "mafanatext admin clear privateLogs", "mafanatextnetwork admin clear privateLogs"}, permission = "mafana.admin")
-    public void clearPrivateLogs(@Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
+    public void clearPrivateLogs(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPrivateTextLogs(UUID.fromString(offlineProxyPlayer.getPlayerUUID()));
     }
 
     @Command(names = {"mtn admin clear publicLogs", "mafanatext admin clear publicLogs", "mafanatextnetwork admin clear publicLogs"}, permission = "mafana.admin")
-    public void clearPublicLogs(@Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
+    public void clearPublicLogs(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearPublicTextLogs(UUID.fromString(offlineProxyPlayer.getPlayerUUID()));
     }
 
     @Command(names = {"mtn admin clear recipients", "mafanatext admin clear recipients", "mafanatextnetwork admin clear recipients"}, permission = "mafana.admin")
-    public void clearRecipients(@Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
+    public void clearRecipients(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearAllowedRecipients(UUID.fromString(offlineProxyPlayer.getPlayerUUID()));
     }
 
     @Command(names = {"mtn admin clear time", "mafanatext admin clear time", "mafanatextnetwork admin clear time"}, permission = "mafana.admin")
-    public void clearTime(@Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
+    public void clearTime(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         MafanaTextNetwork.getInstance().getGamePlayerMessageData().clearLastTimeText(UUID.fromString(offlineProxyPlayer.getPlayerUUID()));
     }
 
@@ -128,11 +145,19 @@ public class MafanaTextNetworkAdminCommand {
             if (letThemSee) {
                 MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(target.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
                     proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.RED + player.getName() + ": " + ChatColor.WHITE + message);
+                }).exceptionally(e -> {
+                    e.printStackTrace();
+                    return null;
                 });
+                ;
             } else {
                 MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(target.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
                     proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "]: " + ChatColor.WHITE + message);
+                }).exceptionally(e -> {
+                    e.printStackTrace();
+                    return null;
                 });
+                ;
             }
         }
     }

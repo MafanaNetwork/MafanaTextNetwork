@@ -65,7 +65,7 @@ public class ServerMessageData extends MySQL {
     }
 
     public CompletableFuture<List<String>> getBlackListedWordList(String server) {
-        return sqlGetter.getStringAsync(new EncryptionUtil().stringToUUID(server), new DatabaseValue("STARED_OUT_WORDS"))
+        return sqlGetter.getStringAsync(new EncryptionUtil().stringToUUID(server), new DatabaseValue("BLACK_LISTED_WORDS"))
                 .thenApply(x -> {
                     Gson gson = new Gson();
                     List<String> values = gson.fromJson(x, new TypeToken<List<String>>() {
@@ -76,7 +76,7 @@ public class ServerMessageData extends MySQL {
 
     public CompletableFuture<Void> setBlackListedWordList(String server, List<String> s) {
         Gson gson = new Gson();
-        return sqlGetter.setStringAsync(new DatabaseValue("STARED_OUT_WORDS", new EncryptionUtil().stringToUUID(server), gson.toJson(s)));
+        return sqlGetter.setStringAsync(new DatabaseValue("BLACK_LISTED_WORDS", new EncryptionUtil().stringToUUID(server), gson.toJson(s)));
     }
 
     public CompletableFuture<Void> removeStaredOutWord(String server, String s) {
