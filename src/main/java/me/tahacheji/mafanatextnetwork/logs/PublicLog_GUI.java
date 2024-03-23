@@ -9,6 +9,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.PaginatedGui;
 import me.tahacheji.mafana.MafanaNetworkCommunicator;
 import me.tahacheji.mafana.data.OfflineProxyPlayer;
+import me.tahacheji.mafana.data.Server;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPrivateMessaging;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerPublicMessaging;
@@ -160,31 +161,31 @@ public class PublicLog_GUI {
     @NotNull
     private CompletableFuture<ItemStack> getItemStackPM(GamePlayerPublicMessaging publicMessaging) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayerAsync(publicMessaging.getSender()).get();
-                ItemStack item = new ItemStack(Material.PAPER);
-                ItemMeta itemMeta = item.getItemMeta();
-                itemMeta.setDisplayName(net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) + publicMessaging.getDate());
-                List<String> itemLore = new ArrayList<>();
-                itemLore.add("------------------------");
-                itemLore.add(ChatColor.DARK_GRAY + "Sender: " + offlineProxyPlayer.getPlayerDisplayName());
-                itemLore.add(ChatColor.DARK_GRAY + "");
-                if (publicMessaging.getText() != null) {
-                    itemLore.add(ChatColor.DARK_GRAY + "Message: " + ChatColor.WHITE + publicMessaging.getText());
-                } else {
-                    itemLore.add(ChatColor.DARK_GRAY + "Message: " + ChatColor.WHITE + "NULL");
-                }
-                itemLore.add(ChatColor.DARK_GRAY + "Time: " + ChatColor.WHITE + publicMessaging.getDate());
-                itemLore.add("------------------------");
-                itemMeta.setLore(itemLore);
-                item.setItemMeta(itemMeta);
-                NBTItem nbtItem = new NBTItem(item);
-                nbtItem.setInteger("TIME", publicMessaging.getTime());
-                item = nbtItem.getItem();
-                return item;
-            } catch (ExecutionException | InterruptedException e) {
-                throw new RuntimeException(e);
+            OfflineProxyPlayer offlineProxyPlayer = MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayerAsync(publicMessaging.getSender()).join();
+            Server s = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getServerFromUUIDAsync(UUID.fromString(publicMessaging.getSenderServerID())).join();
+            ItemStack item = new ItemStack(Material.PAPER);
+            ItemMeta itemMeta = item.getItemMeta();
+            itemMeta.setDisplayName(net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) + publicMessaging.getDate());
+            List<String> itemLore = new ArrayList<>();
+            itemLore.add("------------------------");
+            itemLore.add(ChatColor.DARK_GRAY + "Sender: " + offlineProxyPlayer.getPlayerDisplayName());
+            if(s != null) {
+                itemLore.add(ChatColor.DARK_GRAY + "Sender Server: " + s.getServerID());
             }
+            itemLore.add(ChatColor.DARK_GRAY + "");
+            if (publicMessaging.getText() != null) {
+                itemLore.add(ChatColor.DARK_GRAY + "Message: " + ChatColor.WHITE + publicMessaging.getText());
+            } else {
+                itemLore.add(ChatColor.DARK_GRAY + "Message: " + ChatColor.WHITE + "NULL");
+            }
+            itemLore.add(ChatColor.DARK_GRAY + "Time: " + ChatColor.WHITE + publicMessaging.getDate());
+            itemLore.add("------------------------");
+            itemMeta.setLore(itemLore);
+            item.setItemMeta(itemMeta);
+            NBTItem nbtItem = new NBTItem(item);
+            nbtItem.setInteger("TIME", publicMessaging.getTime());
+            item = nbtItem.getItem();
+            return item;
         });
     }
 

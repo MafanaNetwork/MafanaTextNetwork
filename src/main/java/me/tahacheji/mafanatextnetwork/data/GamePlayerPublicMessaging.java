@@ -15,17 +15,16 @@ public class GamePlayerPublicMessaging {
 
     private String text;
 
+    private String senderServerID;
 
-    public GamePlayerPublicMessaging(String sender, String time, String text) {
+
+    public GamePlayerPublicMessaging(String sender, String time, String text, String senderServer) {
         this.sender = sender;
         this.time = time;
         this.text = text;
+        this.senderServerID = senderServer;
     }
 
-    public GamePlayerPublicMessaging(String sender, String time) {
-        this.sender = sender;
-        this.time = time;
-    }
 
     public UUID getSender() {
         return UUID.fromString(sender);
@@ -58,6 +57,10 @@ public class GamePlayerPublicMessaging {
             System.err.println("Invalid date format: " + newTime);
             return 0;
         }
+    }
+
+    public String getSenderServerID() {
+        return senderServerID;
     }
 
     public String getText() {

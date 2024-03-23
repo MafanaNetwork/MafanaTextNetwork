@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import me.tahacheji.mafana.MafanaNetworkCommunicator;
-import me.tahacheji.mafana.data.DatabaseValue;
-import me.tahacheji.mafana.data.MySQL;
-import me.tahacheji.mafana.data.OfflineProxyPlayer;
-import me.tahacheji.mafana.data.SQLGetter;
+import me.tahacheji.mafana.data.*;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import me.tahacheji.mafanatextnetwork.util.EncryptionUtil;
 import org.bukkit.OfflinePlayer;
@@ -62,7 +59,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<Void> addMail(UUID uuid, PlayerMail mail) {
         return getPlayerMailAsync(uuid)
-                .thenApply(mails -> {
+                .thenApplyAsync(mails -> {
                     List<PlayerMail> updatedMails = new ArrayList<>(mails);
                     updatedMails.add(mail);
                     return updatedMails;
@@ -98,7 +95,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<PlayerMail>> getPlayerMailAsync(UUID uuid) {
         return sqlGetter.getStringAsync(uuid, new DatabaseValue("PLAYER_MAIL"))
-                .thenApply(x -> {
+                .thenApplyAsync(x -> {
                     Gson gson = new Gson();
                     List<PlayerMail> m = gson.fromJson(x, new TypeToken<List<PlayerMail>>() {
                     }.getType());
@@ -111,18 +108,27 @@ public class GamePlayerMessageData extends MySQL {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
+
         return getPublicTextListAsync(player)
-                .thenApply(list -> {
+                .thenComposeAsync(list -> {
+                    final List<GamePlayerPublicMessaging> finalList;
                     if (list != null) {
-                        list.add(new GamePlayerPublicMessaging(player.toString(), time, string));
+                        finalList = new ArrayList<>(list);
                     } else {
-                        list = new ArrayList<>();
-                        list.add(new GamePlayerPublicMessaging(player.toString(), time, string));
+                        finalList = new ArrayList<>();
                     }
-                    return list;
+                    return MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(player)
+                            .thenApplyAsync(p -> {
+                                if (finalList != null) {
+                                    finalList.add(new GamePlayerPublicMessaging(player.toString(), time, string, p.getServerID().toString()));
+                                }
+                                return finalList;
+                            });
                 })
-                .thenCompose(list -> setPublicTextAsync(player, list));
+                .thenComposeAsync(finalList -> setPublicTextAsync(player, finalList));
     }
+
+
 
     public CompletableFuture<Void> setPublicTextAsync(UUID uuid, List<GamePlayerPublicMessaging> list) {
         Gson gson = new Gson();
@@ -131,7 +137,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<GamePlayerPublicMessaging>> getPublicTextListAsync(UUID uuid) {
         return sqlGetter.getStringAsync(uuid, new DatabaseValue("PUBLIC_TEXT"))
-                .thenApply(x -> {
+                .thenApplyAsync(x -> {
                     Gson gson = new Gson();
                     List<GamePlayerPublicMessaging> m = gson.fromJson(x, new TypeToken<List<GamePlayerPublicMessaging>>() {
                     }.getType());
@@ -152,33 +158,30 @@ public class GamePlayerMessageData extends MySQL {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
         LocalDateTime now = LocalDateTime.now();
         String time = "[" + dtf.format(now) + "]";
+
         return getPrivateTextListAsync(sender)
-                .thenApply(gamePlayerPrivateMessagings -> {
+                .thenComposeAsync(gamePlayerPrivateMessagings -> {
+                    final List<GamePlayerPrivateMessaging> finalList;
                     if (gamePlayerPrivateMessagings != null) {
-                        gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string));
+                        finalList = new ArrayList<>(gamePlayerPrivateMessagings);
                     } else {
-                        gamePlayerPrivateMessagings = new ArrayList<>();
-                        gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string));
+                        finalList = new ArrayList<>();
                     }
-                    return gamePlayerPrivateMessagings;
-                })
-                .thenCompose(gamePlayerPrivateMessagings -> setPrivateTextAsync(sender, gamePlayerPrivateMessagings));
+                    return MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(sender)
+                            .thenCombineAsync(
+                                    MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(receiver),
+                                    (senderProxy, receiverProxy) -> {
+                                        if (finalList != null) {
+                                            finalList.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time, string, senderProxy.getServerID().toString(), receiverProxy.getServerID().toString()));
+                                        }
+                                        return finalList;
+                                    })
+                            .thenComposeAsync(list -> setPrivateTextAsync(sender, list));
+                });
     }
 
-    public CompletableFuture<Void> addPrivateText(UUID sender, UUID receiver) {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
-        LocalDateTime now = LocalDateTime.now();
-        String time = "[" + dtf.format(now) + "]";
-        return getPrivateTextListAsync(sender)
-                .thenApply(gamePlayerPrivateMessagings -> {
-                    if (gamePlayerPrivateMessagings == null) {
-                        gamePlayerPrivateMessagings = new ArrayList<>();
-                    }
-                    gamePlayerPrivateMessagings.add(new GamePlayerPrivateMessaging(sender.toString(), receiver.toString(), time));
-                    return gamePlayerPrivateMessagings;
-                })
-                .thenCompose(gamePlayerPrivateMessagings -> setPrivateTextAsync(sender, gamePlayerPrivateMessagings));
-    }
+
+
 
     public CompletableFuture<Void> setPrivateTextAsync(UUID uuid, List<GamePlayerPrivateMessaging> list) {
         Gson gson = new Gson();
@@ -187,7 +190,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<GamePlayerPrivateMessaging>> getPrivateTextListAsync(UUID uuid) {
         return sqlGetter.getStringAsync(uuid, new DatabaseValue("PRIVATE_TEXT"))
-                .thenApply(x -> {
+                .thenApplyAsync(x -> {
                     Gson gson = new Gson();
                     List<GamePlayerPrivateMessaging> m = gson.fromJson(x, new TypeToken<List<GamePlayerPrivateMessaging>>() {
                     }.getType());
@@ -197,7 +200,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<Boolean> isRecipient(UUID request, UUID player) {
         return getAllowedRecipientsAsync(request)
-                .thenApply(allowedRecipients -> allowedRecipients.stream()
+                .thenApplyAsync(allowedRecipients -> allowedRecipients.stream()
                         .anyMatch(uuid -> uuid.getPlayerUUID().toString().equalsIgnoreCase(player.toString())));
     }
 
@@ -242,7 +245,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<AllowedRecipient>> getAllowedRecipientsStringAsync(UUID player) {
         return sqlGetter.getStringAsync(player, new DatabaseValue("ALLOWED_RECIPIENTS"))
-                .thenApply(x -> {
+                .thenApplyAsync(x -> {
                     Gson gson = new Gson();
                     List<AllowedRecipient> recipients = gson.fromJson(x, new TypeToken<List<AllowedRecipient>>() {
                     }.getType());
@@ -252,7 +255,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<AllowedRecipient>> getAllowedRecipientsAsync(UUID player) {
         return getAllowedRecipientsStringAsync(player)
-                .thenApply(list -> {
+                .thenApplyAsync(list -> {
                     List<AllowedRecipient> allowedRecipients = new ArrayList<>();
                     for (AllowedRecipient s : list) {
                         if (s != null) {
@@ -265,7 +268,7 @@ public class GamePlayerMessageData extends MySQL {
 
     public CompletableFuture<List<GamePlayerPrivateMessaging>> getPrivateChatsWithAllowedRecipientAsync(UUID uuid, UUID allowedRecipient) {
         return getPrivateTextListAsync(uuid)
-                .thenApply(privateMessages -> {
+                .thenApplyAsync(privateMessages -> {
                     if (privateMessages == null) {
                         return new ArrayList<>();
                     }

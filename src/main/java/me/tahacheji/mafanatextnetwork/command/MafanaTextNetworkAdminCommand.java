@@ -75,13 +75,26 @@ public class MafanaTextNetworkAdminCommand {
     @Command(names = {"mtn admin troll", "mafanatext admin troll", "mafanatextnetwork admin troll"}, permission = "mafana.admin")
     public void trollTextPlayer(@Param(name = "letTheSenderSee") boolean letTheSenderSee, @Param(name = "sender") OfflineProxyPlayer sender, @Param(name = "receiver") OfflineProxyPlayer receiver, @Param(name = "message", concated = true) String message) {
         try {
-            if (letTheSenderSee) {
-                MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
-                    proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD + receiver.getPlayerName() + ": " + ChatColor.WHITE + message);
-                });
-            }
-            MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(receiver.getPlayerUUID())).thenAcceptAsync(proxyPlayer -> {
-                proxyPlayer.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+            CompletableFuture.supplyAsync(() -> {
+                ProxyPlayer s = null;
+                ProxyPlayer r = null;
+                if (letTheSenderSee) {
+                    s = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(sender.getPlayerUUID())).join();
+                }
+                r = MafanaNetworkCommunicator.getInstance().getNetworkCommunicatorDatabase().getProxyPlayerAsync(UUID.fromString(receiver.getPlayerUUID())).join();
+                if (s != null) {
+                    ProxyPlayer finalR = r;
+                    s.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] TO " + ChatColor.GOLD + receiver.getPlayerName() + ": " + ChatColor.WHITE + message)
+                            .thenComposeAsync(unused -> {
+                                if(finalR != null) {
+                                    finalR.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+                                }
+                                return null;
+                            });
+                } else if(r != null) {
+                    r.sendMessage(ChatColor.DARK_GRAY + "[" + ChatColor.GOLD + "MTN" + ChatColor.DARK_GRAY + "] FROM " + ChatColor.GOLD + sender.getPlayerName() + ": " + ChatColor.WHITE + message);
+                }
+                 return null;
             });
         } catch (Exception e) {
             e.printStackTrace();

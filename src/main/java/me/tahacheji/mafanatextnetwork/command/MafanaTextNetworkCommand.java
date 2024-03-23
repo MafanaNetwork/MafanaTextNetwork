@@ -20,13 +20,16 @@ public class MafanaTextNetworkCommand {
 
     @Command(names = {"mtn addRecipient", "mafanatext addRecipient", "mafanatextnetwork addRecipient"}, playerOnly = true)
     public void addRecipient(Player player, @Param(name = "recipient") OfflinePlayer target) {
-        CompletableFuture<Void> recipientFuture = MafanaTextNetwork.getInstance().getGamePlayerMessageData().addRecipient(player.getUniqueId(), target.getUniqueId());
-        recipientFuture.thenRun(() -> player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_ADDED"))
-                .exceptionally(ex -> {
-                    player.sendMessage(ChatColor.RED + "MafanaTextNetwork: Error occurred while adding player as recipient");
-                    ex.printStackTrace();
-                    return null;
-                });
+        MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player.getUniqueId(), target.getUniqueId()).thenAcceptAsync(exist -> {
+            if(!exist) {
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().addRecipient(player.getUniqueId(), target.getUniqueId()).thenRun(() -> player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_ADDED"))
+                        .exceptionally(ex -> {
+                            player.sendMessage(ChatColor.RED + "MafanaTextNetwork: Error occurred while adding player as recipient");
+                            ex.printStackTrace();
+                            return null;
+                        });
+            }
+        });
     }
 
     @Command(names = {"mtn removeRecipient", "mafanatext removeRecipient", "mafanatextnetwork removeRecipient"}, playerOnly = true)

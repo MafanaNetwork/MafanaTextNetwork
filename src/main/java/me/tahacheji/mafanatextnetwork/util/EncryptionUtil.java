@@ -20,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class EncryptionUtil {
@@ -68,6 +70,29 @@ public class EncryptionUtil {
             return item;
         } catch (ClassNotFoundException e) {
             throw new IOException("Unable to decode class type.", e);
+        }
+    }
+
+    public UUID stringToUUID(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            long mostSigBits = 0L;
+            long leastSigBits = 0L;
+
+            int i;
+            for(i = 0; i < 8; ++i) {
+                mostSigBits = mostSigBits << 8 | (long)(hashBytes[i] & 255);
+            }
+
+            for(i = 8; i < 16; ++i) {
+                leastSigBits = leastSigBits << 8 | (long)(hashBytes[i] & 255);
+            }
+
+            return new UUID(mostSigBits, leastSigBits);
+        } catch (NoSuchAlgorithmException var9) {
+            var9.printStackTrace();
+            return null;
         }
     }
 }

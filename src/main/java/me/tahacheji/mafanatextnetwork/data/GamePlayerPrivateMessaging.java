@@ -11,6 +11,7 @@ import java.util.UUID;
 public class GamePlayerPrivateMessaging {
 
     private final String sender;
+
     private final String receiver;
 
     private final String time;
@@ -19,6 +20,9 @@ public class GamePlayerPrivateMessaging {
 
     private String item;
 
+    private String serverSenderID;
+    private String serverReceiverID;
+
 
     public GamePlayerPrivateMessaging(String sender, String receiver, String time) {
         this.sender = sender;
@@ -26,9 +30,11 @@ public class GamePlayerPrivateMessaging {
         this.time = time;
     }
 
-    public GamePlayerPrivateMessaging(String sender, String receiver, String time, String text) {
+    public GamePlayerPrivateMessaging(String sender, String receiver, String time, String text, String serverSenderID, String serverReceiverID) {
         this(sender, receiver, time);
         this.text = text;
+        this.serverSenderID = serverSenderID;
+        this.serverReceiverID = serverReceiverID;
     }
 
     public void setItem(ItemStack item) {
@@ -87,7 +93,13 @@ public class GamePlayerPrivateMessaging {
         }
     }
 
+    public String getServerReceiverID() {
+        return serverReceiverID;
+    }
 
+    public String getServerSenderID() {
+        return serverSenderID;
+    }
 
     public String getText() {
         return text;
