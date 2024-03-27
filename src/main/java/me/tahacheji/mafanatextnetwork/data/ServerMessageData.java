@@ -6,8 +6,11 @@ import me.tahacheji.mafana.MafanaNetworkCommunicator;
 import me.tahacheji.mafana.data.DatabaseValue;
 import me.tahacheji.mafana.data.MySQL;
 import me.tahacheji.mafana.data.SQLGetter;
+import me.tahacheji.mafanatextnetwork.util.CensorUtil;
 import me.tahacheji.mafanatextnetwork.util.EncryptionUtil;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -122,15 +125,38 @@ public class ServerMessageData extends MySQL {
         return sqlGetter.setStringAsync(new DatabaseValue("STARED_OUT_WORDS", new EncryptionUtil().stringToUUID(server), gson.toJson(s)));
     }
 
+    public CompletableFuture<Void> onJoinMutedPlayer(String server) {
+        return getMutedPlayerList(server).thenComposeAsync(mutedPlayers -> {
+            List<MutedPlayer> mutedPlayersToRemove = new ArrayList<>();
+            if (mutedPlayers != null) {
+                for (MutedPlayer mutedPlayer : mutedPlayers) {
+                    String endDate = mutedPlayer.getEndDate();
+                    if (new CensorUtil().isEndDateTodayOrBefore(endDate)) {
+                        mutedPlayersToRemove.add(mutedPlayer);
+                    }
+                }
+            }
+            if (!mutedPlayersToRemove.isEmpty()) {
+                return CompletableFuture.allOf(
+                        mutedPlayersToRemove.stream()
+                                .map(mutedPlayer -> removeMutedPlayer(server, mutedPlayer.getUser()))
+                                .toArray(CompletableFuture[]::new)
+                );
+            }
+            return CompletableFuture.completedFuture(null);
+        });
+    }
+
+
     public CompletableFuture<Void> removeMutedPlayer(String server, String s) {
         return getMutedPlayerList(server).thenComposeAsync(values -> {
-            List<String> x = new ArrayList<>();
-            String itemToRemove = null;
+            List<MutedPlayer> x = new ArrayList<>();
+            MutedPlayer itemToRemove = null;
             if(values != null) {
                 x.addAll(values);
             }
-            for(String d : x) {
-                if(d.equalsIgnoreCase(s)) {
+            for(MutedPlayer d : x) {
+                if(d.getUser().equalsIgnoreCase(s)) {
                     itemToRemove = d;
                 }
             }
@@ -139,28 +165,28 @@ public class ServerMessageData extends MySQL {
         });
     }
 
-    public CompletableFuture<Void> addMutedPlayer(String server, String id) {
+    public CompletableFuture<Void> addMutedPlayer(String server, MutedPlayer mutedPlayer) {
         return getMutedPlayerList(server).thenComposeAsync(values -> {
-            List<String> x = new ArrayList<>();
+            List<MutedPlayer> x = new ArrayList<>();
             if(values != null) {
                 x.addAll(values);
             }
-            x.add(id);
+            x.add(mutedPlayer);
             return setMutedPlayerList(server, x);
         });
     }
 
-    public CompletableFuture<List<String>> getMutedPlayerList(String server) {
+    public CompletableFuture<List<MutedPlayer>> getMutedPlayerList(String server) {
         return sqlGetter.getStringAsync(new EncryptionUtil().stringToUUID(server), new DatabaseValue("MUTED_PLAYERS"))
                 .thenApply(x -> {
                     Gson gson = new Gson();
-                    List<String> values = gson.fromJson(x, new TypeToken<List<String>>() {
+                    List<MutedPlayer> values = gson.fromJson(x, new TypeToken<List<MutedPlayer>>() {
                     }.getType());
                     return values != null ? values : new ArrayList<>();
                 });
     }
 
-    public CompletableFuture<Void> setMutedPlayerList(String server, List<String> s) {
+    public CompletableFuture<Void> setMutedPlayerList(String server, List<MutedPlayer> s) {
         Gson gson = new Gson();
         return sqlGetter.setStringAsync(new DatabaseValue("MUTED_PLAYERS", new EncryptionUtil().stringToUUID(server), gson.toJson(s)));
     }

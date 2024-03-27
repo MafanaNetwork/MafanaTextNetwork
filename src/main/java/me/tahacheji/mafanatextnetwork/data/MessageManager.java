@@ -1,5 +1,8 @@
 package me.tahacheji.mafanatextnetwork.data;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketContainer;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -7,6 +10,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.EulerAngle;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -16,8 +20,8 @@ import java.util.List;
 public class MessageManager {
 
     private final List<ArmorStand> armorStandList = new ArrayList<>();
-    private static final int MAX_ARMOR_STANDS = 5;
-    private static final double DISTANCE_BETWEEN_MESSAGES = 0.2;
+    private final int MAX_ARMOR_STANDS = 5;
+    private final double DISTANCE_BETWEEN_MESSAGES = 0.2;
 
     public void sendMessage(Player sender, String message) {
         new BukkitRunnable() {
@@ -29,7 +33,7 @@ public class MessageManager {
                     stand.teleport(newLocation);
                 }
                 ArmorStand armorStand = spawnMessageArmorStand(sender, message);
-                armorStandList.add(0, armorStand); // Add at the beginning of the list
+                armorStandList.add(0, armorStand);
                 if (armorStandList.size() > MAX_ARMOR_STANDS) {
                     ArmorStand oldestArmorStand = armorStandList.remove(armorStandList.size() - 1);
                     if (oldestArmorStand != null) {
@@ -57,6 +61,9 @@ public class MessageManager {
         armorStand.setInvulnerable(true);
         armorStand.setCustomNameVisible(true);
         armorStand.setCustomName(message);
+
+        armorStand.setHeadPose(new EulerAngle(Math.toRadians(180), 0, 0));
+
 
         new BukkitRunnable() {
             @Override

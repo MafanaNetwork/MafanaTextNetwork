@@ -27,28 +27,95 @@ public class GamePlayerMessageData extends MySQL {
         super("162.254.145.231", "3306", "51252", "51252", "346a1ef0fc");
     }
 
-    public CompletableFuture<Void> addPlayer(Player player) {
+    public CompletableFuture<Boolean> addPlayer(Player player, List<String> values) {
         UUID uuid = player.getUniqueId();
-        return sqlGetter.existsAsync(uuid).thenComposeAsync(exists -> {
-            if (!exists) {
-                CompletableFuture<Void> setNameFuture = sqlGetter.setStringAsync(new DatabaseValue("NAME", uuid, player.getName()));
-                CompletableFuture<Void> setLastTimeTextFuture = sqlGetter.setStringAsync(new DatabaseValue("LAST_TIME_TEXT", uuid, ""));
-                CompletableFuture<Void> setAllowedRecipientsFuture = sqlGetter.setStringAsync(new DatabaseValue("ALLOWED_RECIPIENTS", uuid, ""));
-                CompletableFuture<Void> setPrivateTextFuture = sqlGetter.setStringAsync(new DatabaseValue("PRIVATE_TEXT", uuid, ""));
-                CompletableFuture<Void> setPublicTextFuture = sqlGetter.setStringAsync(new DatabaseValue("PUBLIC_TEXT", uuid, ""));
-                CompletableFuture<Void> setPlayerMailFuture = sqlGetter.setStringAsync(new DatabaseValue("PLAYER_MAIL", uuid, ""));
-                CompletableFuture<Void> setTextValueFuture = sqlGetter.setStringAsync(new DatabaseValue("TEXT_VALUE", uuid, "0"));
-                CompletableFuture<Void> setUUIDFuture = sqlGetter.setUUIDAsync(new DatabaseValue("UUID", uuid, uuid));
+        return sqlGetter.existsAsync(uuid)
+                .thenComposeAsync(exists -> {
+                    if (!exists) {
+                        Gson gson = new Gson();
+                        return sqlGetter.setStringAsync(new DatabaseValue("NAME", uuid, player.getName()))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("LAST_TIME_TEXT", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("ALLOWED_RECIPIENTS", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("PRIVATE_TEXT", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("PUBLIC_TEXT", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("PLAYER_MAIL", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("LAST_SENDER", uuid, "")))
+                                .thenCompose(__ -> sqlGetter.setStringAsync(new DatabaseValue("USER_VALUES", uuid, gson.toJson(values))))
+                                .thenCompose(__ -> sqlGetter.setUUIDAsync(new DatabaseValue("UUID", uuid, uuid)))
+                                .thenApply(__ -> true);
+                    } else {
+                        return CompletableFuture.completedFuture(false);
+                    }
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    return false;
+                });
+    }
 
-                return CompletableFuture.allOf(setNameFuture, setLastTimeTextFuture, setAllowedRecipientsFuture,
-                        setPrivateTextFuture, setPublicTextFuture, setPlayerMailFuture, setTextValueFuture, setUUIDFuture);
+    public CompletableFuture<Void> replaceUserValue(UUID uuid, String replace, String newValue) {
+        return getUserValues(uuid).thenComposeAsync(values -> {
+            List<String> x = new ArrayList<>();
+            String r = null;
+            if(values != null) {
+                x.addAll(values);
             }
-            return CompletableFuture.completedFuture(null);
-        }).exceptionally(e -> {
-            e.printStackTrace();
-            return null;
+            for(String l : x) {
+                if(l.equalsIgnoreCase(replace)) {
+                    r = l;
+                }
+            }
+            x.remove(r);
+            x.add(newValue);
+            return setUserValues(uuid, x);
         });
     }
+
+    public CompletableFuture<Void> addUserValue(UUID uuid, String s) {
+        return getUserValues(uuid).thenComposeAsync(values -> {
+            List<String> x = new ArrayList<>();
+            if(values != null) {
+                x.addAll(values);
+            }
+            x.add(s);
+            return setUserValues(uuid, x);
+        });
+    }
+
+    public CompletableFuture<Void> setUserValues(UUID uuid, List<String> s) {
+        Gson gson = new Gson();
+        return sqlGetter.setStringAsync(new DatabaseValue("USER_VALUES", uuid, gson.toJson(s)));
+    }
+
+    public CompletableFuture<List<String>> getUserValues(UUID uuid) {
+        return sqlGetter.getStringAsync(uuid, new DatabaseValue("USER_VALUES"))
+                .thenApply(x -> {
+                    Gson gson = new Gson();
+                    List<String> values = gson.fromJson(x, new TypeToken<List<String>>() {
+                    }.getType());
+                    return values != null ? values : new ArrayList<>();
+                });
+    }
+
+    public CompletableFuture<Void> clearLastSender(UUID uuid) {
+        return sqlGetter.setStringAsync(new DatabaseValue("LAST_SENDER", uuid, ""));
+    }
+
+    public CompletableFuture<Void> setLastSender(UUID uuid, LastSender lastSender) {
+        Gson gson = new Gson();
+        String v = gson.toJson(lastSender);
+        return sqlGetter.setStringAsync(new DatabaseValue("LAST_SENDER", uuid, v));
+    }
+
+    public CompletableFuture<LastSender> getLastSender(UUID uuid) {
+        return sqlGetter.getStringAsync(uuid, new DatabaseValue("LAST_SENDER"))
+                .thenApplyAsync(x -> {
+                    Gson gson = new Gson();
+                    return gson.fromJson(x, new TypeToken<LastSender>() {
+                    }.getType());
+                });
+    }
+
 
     public CompletableFuture<Void> openMail(UUID uuid, PlayerMail mail) {
         PlayerMail newPlayerMail = mail;
@@ -71,18 +138,18 @@ public class GamePlayerMessageData extends MySQL {
         CompletableFuture<Void> z = new CompletableFuture<>();
         List<PlayerMail> p = new ArrayList<>();
         getPlayerMailAsync(uuid).thenAcceptAsync(playerMails -> {
-            if(playerMails != null) {
+            if (playerMails != null) {
                 p.addAll(playerMails);
             }
             PlayerMail playerMailToRemove = p.stream()
                     .filter(x -> x.getMailUUID().equalsIgnoreCase(mail.getMailUUID()))
                     .findFirst()
                     .orElse(null);
-            if(playerMailToRemove != null) {
+            if (playerMailToRemove != null) {
                 p.remove(playerMailToRemove);
             }
             setPlayerMailAsync(uuid, p).thenAcceptAsync(o -> {
-               z.complete(null);
+                z.complete(null);
             });
         });
         return z;
@@ -129,7 +196,6 @@ public class GamePlayerMessageData extends MySQL {
     }
 
 
-
     public CompletableFuture<Void> setPublicTextAsync(UUID uuid, List<GamePlayerPublicMessaging> list) {
         Gson gson = new Gson();
         return sqlGetter.setStringAsync(new DatabaseValue("PUBLIC_TEXT", uuid, gson.toJson(list)));
@@ -143,14 +209,6 @@ public class GamePlayerMessageData extends MySQL {
                     }.getType());
                     return m != null ? m : new ArrayList<>();
                 });
-    }
-
-    public CompletableFuture<Void> setTextValue(UUID uuid, String i) {
-        return sqlGetter.setStringAsync(new DatabaseValue("TEXT_VALUE", uuid, i));
-    }
-
-    public CompletableFuture<String> getTextValue(UUID uuid) {
-        return sqlGetter.getStringAsync(uuid, new DatabaseValue("TEXT_VALUE"));
     }
 
     public CompletableFuture<Void> addPrivateText(UUID sender, UUID receiver, String string) {
@@ -181,8 +239,6 @@ public class GamePlayerMessageData extends MySQL {
     }
 
 
-
-
     public CompletableFuture<Void> setPrivateTextAsync(UUID uuid, List<GamePlayerPrivateMessaging> list) {
         Gson gson = new Gson();
         return sqlGetter.setStringAsync(new DatabaseValue("PRIVATE_TEXT", uuid, gson.toJson(list)));
@@ -210,7 +266,7 @@ public class GamePlayerMessageData extends MySQL {
         getAllowedRecipientsAsync(player).thenAcceptAsync(allowedRecipients1 -> {
             allowedRecipients.addAll(allowedRecipients1);
             MafanaNetworkCommunicator.getInstance().getPlayerDatabase().getOfflineProxyPlayerAsync(recipient).thenAcceptAsync(offlineProxyPlayer -> {
-                allowedRecipients.add(new AllowedRecipient(offlineProxyPlayer.getPlayerName(), offlineProxyPlayer.getPlayerDisplayName(), recipient.toString()));
+                allowedRecipients.add(new AllowedRecipient(player.toString(), offlineProxyPlayer.getPlayerName(), offlineProxyPlayer.getPlayerDisplayName(), recipient.toString()));
                 setAllowedRecipientStringAsync(player, allowedRecipients).thenAcceptAsync(a -> {
                     voidCompletableFuture.complete(null);
                 });
@@ -224,7 +280,7 @@ public class GamePlayerMessageData extends MySQL {
         CompletableFuture<Void> x = new CompletableFuture<>();
         List<AllowedRecipient> updatedRecipients = new ArrayList<>();
         getAllowedRecipientsAsync(player).thenAcceptAsync(allowedRecipients -> {
-            for(AllowedRecipient allowedRecipient : allowedRecipients) {
+            for (AllowedRecipient allowedRecipient : allowedRecipients) {
                 if (!recipient.toString().equals(allowedRecipient.getPlayerUUID().toString())) {
                     updatedRecipients.add(allowedRecipient);
                     MafanaTextNetwork.getInstance().getLogger().log(Level.INFO, "Updated Recipient Added: UUID: " + allowedRecipient.getPlayerUUID() + " NAME: " + allowedRecipient.getPlayerName());
@@ -250,6 +306,27 @@ public class GamePlayerMessageData extends MySQL {
                     List<AllowedRecipient> recipients = gson.fromJson(x, new TypeToken<List<AllowedRecipient>>() {
                     }.getType());
                     return recipients != null ? recipients : new ArrayList<>();
+                });
+    }
+
+    public CompletableFuture<List<AllowedRecipient>> getAllAllowedRecipients() {
+        return sqlGetter.getAllStringAsync(new DatabaseValue("ALLOWED_RECIPIENTS"))
+                .thenApplyAsync(list -> {
+                    List<AllowedRecipient> marketListingList = new ArrayList<>();
+                    if (list != null) {
+                        Gson gson = new Gson();
+                        for (String s : list) {
+                            if(gson.fromJson(s, new TypeToken<List<AllowedRecipient>>() {}.getType()) != null) {
+                                marketListingList.addAll(gson.fromJson(s, new TypeToken<List<AllowedRecipient>>() {
+                                }.getType()));
+                            }
+                        }
+                    }
+                    return marketListingList;
+                })
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return new ArrayList<>(); // Return an empty list in case of exception
                 });
     }
 
@@ -327,6 +404,7 @@ public class GamePlayerMessageData extends MySQL {
                 new DatabaseValue("PRIVATE_TEXT", ""),
                 new DatabaseValue("PUBLIC_TEXT", ""),
                 new DatabaseValue("PLAYER_MAIL", ""),
-                new DatabaseValue("TEXT_VALUE", ""));
+                new DatabaseValue("LAST_SENDER", ""),
+                new DatabaseValue("USER_VALUES", ""));
     }
 }

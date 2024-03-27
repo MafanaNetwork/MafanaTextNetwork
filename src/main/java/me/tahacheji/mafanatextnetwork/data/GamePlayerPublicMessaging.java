@@ -13,9 +13,9 @@ public class GamePlayerPublicMessaging {
 
     private final String time;
 
-    private String text;
+    private final String text;
 
-    private String senderServerID;
+    private final String senderServerID;
 
 
     public GamePlayerPublicMessaging(String sender, String time, String text, String senderServer) {
@@ -29,8 +29,6 @@ public class GamePlayerPublicMessaging {
     public UUID getSender() {
         return UUID.fromString(sender);
     }
-
-    private transient DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/d/yyyy h:mm a");
 
     public String getDate() {
         return time;

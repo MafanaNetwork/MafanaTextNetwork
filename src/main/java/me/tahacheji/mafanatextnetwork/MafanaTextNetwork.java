@@ -3,11 +3,16 @@ package me.tahacheji.mafanatextnetwork;
 import me.tahacheji.mafana.commandExecutor.CommandHandler;
 import me.tahacheji.mafanatextnetwork.command.*;
 import me.tahacheji.mafanatextnetwork.data.GamePlayerMessageData;
+import me.tahacheji.mafanatextnetwork.data.LastSender;
 import me.tahacheji.mafanatextnetwork.data.MessageManager;
 import me.tahacheji.mafanatextnetwork.data.ServerMessageData;
 import me.tahacheji.mafanatextnetwork.event.PlayerChatEvent;
 import me.tahacheji.mafanatextnetwork.event.PlayerJoin;
+import me.tahacheji.mafanatextnetwork.event.PlayerLeave;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class MafanaTextNetwork extends JavaPlugin{
 
@@ -31,6 +36,7 @@ public final class MafanaTextNetwork extends JavaPlugin{
         CommandHandler.registerCommands(MafanaTextNetworkCommand.class, this);
         CommandHandler.registerCommands(MafanaTextNetworkAdminCommand.class, this);
         CommandHandler.registerCommands(ServerCommand.class, this);
+        getServer().getPluginManager().registerEvents(new PlayerLeave(), this);
     }
 
     @Override

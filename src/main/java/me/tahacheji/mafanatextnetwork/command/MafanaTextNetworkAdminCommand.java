@@ -32,7 +32,7 @@ public class MafanaTextNetworkAdminCommand {
     public void viewPublicLog(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         if (offlineProxyPlayer != null) {
             try {
-                new PublicLog_GUI().getPublicMessageGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
+                new PublicLog_GUI().getDateMessagesGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -43,7 +43,7 @@ public class MafanaTextNetworkAdminCommand {
     public void viewPrivateLog(Player player, @Param(name = "target") OfflineProxyPlayer offlineProxyPlayer) {
         if (offlineProxyPlayer != null) {
             try {
-                new PrivateLog_GUI().getPrivateMessageGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, "", "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
+                new PrivateLog_GUI().getDateMessagesGUI(UUID.fromString(offlineProxyPlayer.getPlayerUUID()), true, player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

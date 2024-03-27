@@ -21,7 +21,7 @@ public class MafanaTextNetworkCommand {
     @Command(names = {"mtn addRecipient", "mafanatext addRecipient", "mafanatextnetwork addRecipient"}, playerOnly = true)
     public void addRecipient(Player player, @Param(name = "recipient") OfflinePlayer target) {
         MafanaTextNetwork.getInstance().getGamePlayerMessageData().isRecipient(player.getUniqueId(), target.getUniqueId()).thenAcceptAsync(exist -> {
-            if(!exist) {
+            if (!exist) {
                 MafanaTextNetwork.getInstance().getGamePlayerMessageData().addRecipient(player.getUniqueId(), target.getUniqueId()).thenRun(() -> player.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_ADDED"))
                         .exceptionally(ex -> {
                             player.sendMessage(ChatColor.RED + "MafanaTextNetwork: Error occurred while adding player as recipient");
@@ -47,19 +47,21 @@ public class MafanaTextNetworkCommand {
     @Command(names = {"mtn publicTextLog", "mafanatext publicTextLog", "mafanatextnetwork publicTextLog"}, playerOnly = true)
     public void publicTextLog(Player player) {
         try {
-            new PublicLog_GUI().getPublicMessageGUI(player.getUniqueId(), true, "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
+            new PublicLog_GUI().getDateMessagesGUI(player.getUniqueId(), true, player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
     @Command(names = {"mtn privateTextLog", "mafanatext privateTextLog", "mafanatextnetwork privateTextLog"}, playerOnly = true)
     public void privateTextLog(Player player) {
         try {
-            new PrivateLog_GUI().getPrivateMessageGUI(player.getUniqueId(), true, "", "", player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
+            new PrivateLog_GUI().getDateMessagesGUI(player.getUniqueId(), true, player).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(player)));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     @Command(names = {"mtn currentRecipients", "mafanatext currentRecipients", "mafanatextnetwork currentRecipients"}, playerOnly = true)
     public void currentRecipients(Player player) {
         try {

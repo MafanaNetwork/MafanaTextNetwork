@@ -3,6 +3,7 @@ package me.tahacheji.mafanatextnetwork.command;
 import me.tahacheji.mafana.commandExecutor.Command;
 import me.tahacheji.mafana.commandExecutor.paramter.Param;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
+import me.tahacheji.mafanatextnetwork.util.CensorUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -13,53 +14,50 @@ import java.util.concurrent.CompletableFuture;
 public class PlayerChatToggle {
 
     @Command(names = "toggleChat", playerOnly = true, permission = "")
-    public void toggleChat(CommandSender sender) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            CompletableFuture<String> s = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player.getUniqueId());
-            s.thenAcceptAsync(value -> {
-                if (value.equalsIgnoreCase("2")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "0");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Chat: " + ChatColor.RED + "OFF");
-                    //set it to 0
-                } else if (value.equalsIgnoreCase("3")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "1");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Chat: " + ChatColor.RED + "OFF");
-                    //set to 1
-                } else if (value.equalsIgnoreCase("1")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "3");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Chat: " + ChatColor.GREEN + "ON");
-                } else {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "2");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Chat: " + ChatColor.GREEN + "ON");
-                }
-            });
-        }
+    public void toggleChat(Player player) {
+        MafanaTextNetwork.getInstance().getGamePlayerMessageData().getUserValues(player.getUniqueId()).thenAcceptAsync(x -> {
+           String c = new CensorUtil().getChat(x);
+           if(c.equalsIgnoreCase("ALLOW_CHAT")) {
+               MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "ALLOW_CHAT", "DECLINE_CHAT").thenRunAsync(() -> {
+                  player.sendMessage(ChatColor.RED + "Chat Toggled Off");
+               });
+           } else {
+               MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "DECLINE_CHAT", "ALLOW_CHAT").thenRunAsync(() -> {
+                   player.sendMessage(ChatColor.GREEN + "Chat Toggled On");
+               });
+           }
+        });
+    }
+
+    @Command(names = "toggleStarred", playerOnly = true, permission = "")
+    public void toggleStarred(Player player) {
+        MafanaTextNetwork.getInstance().getGamePlayerMessageData().getUserValues(player.getUniqueId()).thenAcceptAsync(x -> {
+            String c = new CensorUtil().getStarred(x);
+            if(c.equalsIgnoreCase("ALLOW_STARRED_MESSAGES")) {
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "ALLOW_STARRED_MESSAGES", "DECLINE_STARRED_MESSAGES").thenRunAsync(() -> {
+                    player.sendMessage(ChatColor.RED + "Starred Messaged Toggled Off");
+                });
+            } else {
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "DECLINE_STARRED_MESSAGES", "ALLOW_STARRED_MESSAGES").thenRunAsync(() -> {
+                    player.sendMessage(ChatColor.GREEN + "Starred Messaged Toggled On");
+                });
+            }
+        });
     }
 
     @Command(names = "toggleBubble", playerOnly = true, permission = "")
-    public void toggleBubble(CommandSender sender) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
-            CompletableFuture<String> s = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getTextValue(player.getUniqueId());
-            s.thenAcceptAsync(value -> {
-                if (value.equalsIgnoreCase("1")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "0");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Bubble: " + ChatColor.RED + "OFF");
-                    //set it to 0
-                } else if (value.equalsIgnoreCase("3")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "2");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Bubble: " + ChatColor.RED + "OFF");
-                    //set to 2
-                } else if (value.equalsIgnoreCase("2")) {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "3");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Bubble: " + ChatColor.GREEN + "ON");
-                } else {
-                    MafanaTextNetwork.getInstance().getGamePlayerMessageData().setTextValue(player.getUniqueId(), "1");
-                    player.sendMessage(ChatColor.GREEN + "Toggle Bubble: " + ChatColor.GREEN + "ON");
-                    //set it to 1
-                }
-            });
-        }
+    public void toggleBubble(Player player) {
+        MafanaTextNetwork.getInstance().getGamePlayerMessageData().getUserValues(player.getUniqueId()).thenAcceptAsync(x -> {
+            String c = new CensorUtil().getBubble(x);
+            if(c.equalsIgnoreCase("ALLOW_TEXT_BUBBLE")) {
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "ALLOW_TEXT_BUBBLE", "DECLINE_TEXT_BUBBLE").thenRunAsync(() -> {
+                    player.sendMessage(ChatColor.RED + "Text Bubble Toggled Off");
+                });
+            } else {
+                MafanaTextNetwork.getInstance().getGamePlayerMessageData().replaceUserValue(player.getUniqueId(), "DECLINE_TEXT_BUBBLE", "ALLOW_TEXT_BUBBLE").thenRunAsync(() -> {
+                    player.sendMessage(ChatColor.GREEN + "Text Bubble Toggled On");
+                });
+            }
+        });
     }
 }

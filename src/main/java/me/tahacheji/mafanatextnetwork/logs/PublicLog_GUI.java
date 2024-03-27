@@ -23,16 +23,119 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PublicLog_GUI {
 
-    public CompletableFuture<PaginatedGui> getPublicMessageGUI(UUID uuid, boolean sortNewestToOldest, String textFilter, Player open) {
+    public CompletableFuture<PaginatedGui> getDateMessagesGUI(UUID uuid, boolean sortNewestToOldest, Player open) {
+        CompletableFuture<PaginatedGui> paginatedGuiCompletableFuture = new CompletableFuture<>();
+        CompletableFuture<List<GamePlayerPublicMessaging>> x = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPublicTextListAsync(uuid);
+        x.thenAcceptAsync(gPPM -> {
+            PaginatedGui gui = Gui.paginated()
+                    .title(Component.text(ChatColor.GOLD + "MTN " + ChatColor.GOLD + "Public Logs"))
+                    .rows(6)
+                    .pageSize(28)
+                    .disableAllInteractions()
+                    .create();
+
+            gui.setItem(0, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(1, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(2, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(3, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(4, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(5, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(6, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(7, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(8, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(17, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(26, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(35, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(45, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(53, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(52, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(51, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(50, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(48, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(47, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(46, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(44, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(36, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(27, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(18, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(9, ItemBuilder.from(Material.BROWN_STAINED_GLASS_PANE).setName(" ").setLore(" ").asGuiItem());
+            gui.setItem(6, 3, ItemBuilder.from(Material.PAPER).setName(ChatColor.DARK_GRAY + "Previous")
+                    .asGuiItem(event -> gui.previous()));
+            gui.setItem(6, 7, ItemBuilder.from(Material.PAPER).setName(ChatColor.DARK_GRAY + "Next")
+                    .asGuiItem(event -> gui.next()));
+
+            ItemStack sortButton = new ItemStack(Material.COMPARATOR);
+            ItemMeta sortButtonMeta = sortButton.getItemMeta();
+
+            if (sortNewestToOldest) {
+                sortButtonMeta.setDisplayName(ChatColor.YELLOW + "Sort: Newest to Oldest");
+            } else {
+                sortButtonMeta.setDisplayName(ChatColor.YELLOW + "Sort: Oldest to Newest");
+            }
+            sortButton.setItemMeta(sortButtonMeta);
+
+            gui.setItem(49, ItemBuilder.from(Material.BARRIER).setName(ChatColor.RED + "Close").asGuiItem(event -> {
+                event.getWhoClicked().closeInventory();
+            }));
+
+            gui.setItem(53, new GuiItem(sortButton, event -> {
+                boolean newSortDirection = !sortNewestToOldest;
+                Player clicker = (Player) event.getWhoClicked();
+                try {
+                    clicker.closeInventory();
+                    getDateMessagesGUI(uuid, newSortDirection, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }));
+
+            Map<String, List<GamePlayerPublicMessaging>> messagesByDate = new LinkedHashMap<>();
+            for (GamePlayerPublicMessaging message : gPPM) {
+                String[] components = message.getDate().replaceAll("[\\[\\]]", "").split("[ /:]");
+                if (components.length >= 6) {
+                    int month = Integer.parseInt(components[0]);
+                    int day = Integer.parseInt(components[1]);
+                    int year = Integer.parseInt(components[2]);
+                    String d = month + "/" + day + "/" + year;
+                    messagesByDate.computeIfAbsent(d, k -> new ArrayList<>()).add(message);
+                }
+            }
+
+            List<String> sortedDates = new ArrayList<>(messagesByDate.keySet());
+            if (sortNewestToOldest) {
+                sortedDates.sort(Comparator.reverseOrder());
+            } else {
+                sortedDates.sort(Comparator.naturalOrder());
+            }
+
+
+            sortedDates.forEach(date -> {
+                ItemStack dateItem = new ItemStack(Material.PAINTING);
+                ItemMeta dateItemMeta = dateItem.getItemMeta();
+                dateItemMeta.setDisplayName(net.md_5.bungee.api.ChatColor.of(new Color(245, 245, 220)) +  "[" + date + "]");
+                dateItemMeta.setLore(Collections.singletonList(ChatColor.YELLOW + "Click to view messages for [" + date + "]"));
+                dateItem.setItemMeta(dateItemMeta);
+                gui.addItem(new GuiItem(dateItem, event -> {
+                    event.getWhoClicked().closeInventory();
+                    getPublicMessageGUI(uuid, date, true, "", open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
+                }));
+            });
+
+
+            paginatedGuiCompletableFuture.complete(gui);
+        });
+        return paginatedGuiCompletableFuture;
+    }
+
+    public CompletableFuture<PaginatedGui> getPublicMessageGUI(UUID uuid, String date, boolean sortNewestToOldest, String textFilter, Player open) {
         CompletableFuture<PaginatedGui> paginatedGuiCompletableFuture = new CompletableFuture<>();
         CompletableFuture<List<GamePlayerPublicMessaging>> x = MafanaTextNetwork.getInstance().getGamePlayerMessageData().getPublicTextListAsync(uuid);
         x.thenAcceptAsync(gPPM -> {
@@ -48,12 +151,6 @@ public class PublicLog_GUI {
             newmeta.setDisplayName(ChatColor.GRAY + " ");
             newmeta.setLore(lore);
             greystainedglass.setItemMeta(newmeta);
-
-            ItemStack closeShop = new ItemStack(Material.BARRIER);
-            ItemMeta closeShopeta = closeShop.getItemMeta();
-            closeShopeta.setDisplayName(ChatColor.GRAY + "Close Page");
-            closeShopeta.setLore(lore);
-            closeShop.setItemMeta(closeShopeta);
 
             gui.setItem(0, new GuiItem(greystainedglass));
             gui.setItem(1, new GuiItem(greystainedglass));
@@ -80,8 +177,8 @@ public class PublicLog_GUI {
             gui.setItem(27, new GuiItem(greystainedglass));
             gui.setItem(18, new GuiItem(greystainedglass));
             gui.setItem(9, new GuiItem(greystainedglass));
-            gui.setItem(49, new GuiItem(closeShop, event -> {
-                event.getWhoClicked().closeInventory();
+            gui.setItem(49, ItemBuilder.from(Material.BARRIER).setName(ChatColor.RED + "Back").asGuiItem(event -> {
+                getDateMessagesGUI(uuid, sortNewestToOldest, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
             }));
             gui.setItem(6, 3, ItemBuilder.from(Material.PAPER).setName(ChatColor.DARK_GRAY + "Previous")
                     .asGuiItem(event -> gui.previous()));
@@ -103,7 +200,7 @@ public class PublicLog_GUI {
                 Player clicker = (Player) event.getWhoClicked();
                 try {
                     clicker.closeInventory();
-                    getPublicMessageGUI(uuid, newSortDirection, textFilter, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
+                    getPublicMessageGUI(uuid, date, newSortDirection, textFilter, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -116,14 +213,23 @@ public class PublicLog_GUI {
 
             gui.setItem(50, new GuiItem(textFilterButton, event -> {
                 event.getWhoClicked().closeInventory();
-                openFilterSign(uuid, sortNewestToOldest, textFilter, open);
+                openFilterSign(uuid, date, sortNewestToOldest, textFilter, open);
             }));
 
             List<GamePlayerPublicMessaging> privateMessages = new ArrayList<>(gPPM);
             List<GamePlayerPublicMessaging> filteredMessages = new ArrayList<>();
             for (GamePlayerPublicMessaging privateMessage : privateMessages) {
                 if (textFilter.isEmpty() || privateMessage.getText().contains(textFilter)) {
-                    filteredMessages.add(privateMessage);
+                    String[] components = privateMessage.getDate().replaceAll("[\\[\\]]", "").split("[ /:]");
+                    if (components.length >= 6) {
+                        int month = Integer.parseInt(components[0]);
+                        int day = Integer.parseInt(components[1]);
+                        int year = Integer.parseInt(components[2]);
+                        String d = month + "/" + day + "/" + year;
+                        if (d.equalsIgnoreCase(date)) {
+                            filteredMessages.add(privateMessage);
+                        }
+                    }
                 }
             }
             List<GuiItem> guiItems = new ArrayList<>();
@@ -169,7 +275,7 @@ public class PublicLog_GUI {
             List<String> itemLore = new ArrayList<>();
             itemLore.add("------------------------");
             itemLore.add(ChatColor.DARK_GRAY + "Sender: " + offlineProxyPlayer.getPlayerDisplayName());
-            if(s != null) {
+            if (s != null) {
                 itemLore.add(ChatColor.DARK_GRAY + "Sender Server: " + s.getServerID());
             }
             itemLore.add(ChatColor.DARK_GRAY + "");
@@ -189,7 +295,7 @@ public class PublicLog_GUI {
         });
     }
 
-    public void openFilterSign(UUID uuid, boolean sortNewestToOldest, String textFilter, Player open) {
+    public void openFilterSign(UUID uuid, String date, boolean sortNewestToOldest, String textFilter, Player open) {
         String filterName = "Text";
         SignGUI.builder()
                 .setLines(null, filterName + " Filter:", textFilter, "MafanaTextNetwork") // set lines
@@ -197,13 +303,13 @@ public class PublicLog_GUI {
                 .setHandler((p, result) -> {
                     String filterValue = result.getLineWithoutColor(0);
                     open.closeInventory();
-                        return List.of(SignGUIAction.run(() -> {
-                            try {
-                                getPublicMessageGUI(uuid, sortNewestToOldest, filterValue, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        }));
+                    return List.of(SignGUIAction.run(() -> {
+                        try {
+                            getPublicMessageGUI(uuid, date, sortNewestToOldest, filterValue, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }));
                 }).callHandlerSynchronously(MafanaTextNetwork.getInstance()).build().open(open);
     }
 

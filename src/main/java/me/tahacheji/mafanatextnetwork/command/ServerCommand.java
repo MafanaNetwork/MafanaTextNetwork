@@ -4,6 +4,7 @@ import me.tahacheji.mafana.commandExecutor.Command;
 import me.tahacheji.mafana.commandExecutor.paramter.Param;
 import me.tahacheji.mafana.data.OfflineProxyPlayer;
 import me.tahacheji.mafanatextnetwork.MafanaTextNetwork;
+import me.tahacheji.mafanatextnetwork.data.MutedPlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -45,8 +46,8 @@ public class ServerCommand {
     }
 
     @Command(names = "mtn admin addMutedPlayer", permission = "mafana.admin", playerOnly = true)
-    public void addMutedPlayer(Player player,@Param(name = "server") String server, @Param(name = "id") OfflineProxyPlayer id) {
-        MafanaTextNetwork.getInstance().getServerMessageData().addMutedPlayer(server, id.getPlayerUUID()).thenRunAsync(() -> {
+    public void addMutedPlayer(Player player,@Param(name = "server") String server, @Param(name = "id") OfflineProxyPlayer id, @Param(name = "endDate") String end) {
+        MafanaTextNetwork.getInstance().getServerMessageData().addMutedPlayer(server, new MutedPlayer(id.getPlayerUUID(), end)).thenRunAsync(() -> {
             player.sendMessage(ChatColor.GREEN + "Complete.");
         });
     }

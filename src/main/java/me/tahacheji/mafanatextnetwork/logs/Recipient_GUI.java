@@ -113,12 +113,11 @@ public class Recipient_GUI {
                         .thenAcceptAsync(itemStack -> guiItems.add(new GuiItem(itemStack, event -> {
                             if(event.getClick() == ClickType.RIGHT) {
                                 event.getWhoClicked().closeInventory();
-                                new PrivateLog_GUI().getPrivateMessageGUI(uuidRecipient, true, allowedRecipient.getPlayerName(), "", open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
+                                new PrivateLog_GUI().getPrivateMessageGUI(uuidRecipient, "", true, allowedRecipient.getPlayerName(), "", open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
                                 } else if (event.getClick() == ClickType.LEFT) {
                                 event.getWhoClicked().closeInventory();
                                 open.sendMessage(ChatColor.GREEN + "MafanaTextNetwork: PLAYER_REMOVED");
                                 MafanaTextNetwork.getInstance().getGamePlayerMessageData().removeRecipient(uuidRecipient, allowedRecipient.getPlayerUUID()).thenAccept(s -> {
-                                    MafanaTextNetwork.getInstance().getLogger().log(Level.INFO, "Updated Recipient Removed: UUID: " + allowedRecipient.getPlayerUUID() + " NAME: " + allowedRecipient.getPlayerName());
                                     getAllowedRecipientGUI(uuidRecipient, textFilter, open).thenAccept(paginatedGui -> Bukkit.getScheduler().runTask(MafanaTextNetwork.getInstance(), () -> paginatedGui.open(open)));
                                 });
                             }
